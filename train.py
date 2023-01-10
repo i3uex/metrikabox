@@ -1,6 +1,8 @@
 import sys
 import time
 from collections import Counter
+
+import pickle
 from tensorflow.keras import callbacks
 from sklearn.utils import class_weight
 from sklearn.preprocessing import LabelBinarizer
@@ -16,12 +18,14 @@ X, Y = data_loader.load(sys.argv[1])
 
 assert len(Y) == X.shape[0]
 
+MODEL_ID = time.time()
 print(Counter(Y))
 print(len(Counter(Y)))
 encoder = LabelBinarizer()
 Y = encoder.fit_transform(Y)
 num_classes = len(encoder.classes_)
-
+with open("LabelEncoder-%d.pkl" % MODEL_ID, "wb") as f:
+    pickle.dump(encoder, f)
 # Add the spec_augment layer for augmentations
 spec_augment = SpecAugment(
     freq_mask_param=5,
@@ -36,7 +40,7 @@ model = AudioClassificationModelBuilder(sample_rate=sample_rate, context_window=
 model.compile("adam", loss="categorical_crossentropy" if num_classes > 2 else "binary_crossentropy", metrics=['accuracy'])
 
 print("Computing sample weight")
-checkpoint_filepath = 'checkpoints/%d/' % time.time()
+checkpoint_filepath = 'checkpoints/%d/' % MODEL_ID
 model_checkpoint_callback = callbacks.ModelCheckpoint(
     filepath=checkpoint_filepath,
     monitor='val_accuracy',
