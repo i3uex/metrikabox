@@ -1,4 +1,5 @@
 import math
+from abc import ABCMeta
 from typing import Union
 
 from pydub import AudioSegment
@@ -9,19 +10,16 @@ import random
 
 from config import SAMPLE_RATE, CONTEXT_WINDOW, PROCESSING_STEP
 
-class Singleton(type):
-    """
-    Metaclass that allows the creation of Singleton classes
-    """
+class SingletonABCMeta(ABCMeta):
     _instances = {}
     def __call__(cls, *args, **kwargs):
-        if cls not in Singleton._instances:
-            Singleton._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return Singleton._instances[cls]
+        if cls not in SingletonABCMeta._instances:
+            SingletonABCMeta._instances[cls] = super(SingletonABCMeta, cls).__call__(*args, **kwargs)
+        return SingletonABCMeta._instances[cls]
 
     def clear(cls):
         try:
-            del Singleton._instances[cls]
+            del SingletonABCMeta._instances[cls]
         except KeyError:
             pass
 
@@ -87,7 +85,6 @@ def create_speech_music_file(music_file, speech_file, index=None):
 def apply_window(audio: Union[AudioSegment, np.array], window=CONTEXT_WINDOW, step=PROCESSING_STEP, sr=SAMPLE_RATE):
     if type(audio) is AudioSegment:
         audio = buf_to_float(audio.get_array_of_samples(), n_bytes=audio.sample_width)
-
     return np.expand_dims(_window(np.pad(audio, math.ceil(sr/2*window), mode="symmetric"), window=window, step=step, sr=sr), 2)
 
 def apply_window_librosa(audio: np.array, sr=SAMPLE_RATE):
