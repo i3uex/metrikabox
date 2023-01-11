@@ -24,10 +24,10 @@ class AudioModelBuilder:
         self.stft_nmels = stft_nmels
         self.file_loader = FileLoader(sample_rate=self.sample_rate, window=self.window, step=self.step)
 
-    def __pretrained_model_with_conv(self, num_classes, pretrained_model=MNIST_convnet):
+    def get_classification_model(self, num_classes, predefined_model=MNIST_convnet):
         input_tensor = layers.Input(shape=(get_mels_from_hop_and_win_lengths(self.stft_hop, self.stft_window, input_size=int(self.sample_rate*self.window)), self.stft_nmels, 1))
         convolution_layer = layers.Conv2D(3, (3, 3), padding='same')(input_tensor)  # X has a dimension of (IMG_SIZE,N_MELS,3)
-        base_model = pretrained_model(
+        base_model = predefined_model(
             include_top=False,
             #weights='imagenet',
             weights=None,
@@ -53,14 +53,16 @@ class AudioModelBuilder:
             input_shape=(int(self.sample_rate*self.window), 1)
         )
 
-    def get_model(self, num_classes, classifier_model=__pretrained_model_with_conv, audio_augmentations=(), spectrum_augmentations=()):
+    def get_model(self, num_classes, predefined_model=None, audio_augmentations=(), spectrum_augmentations=()):
+        if not predefined_model:
+            predefined_model = MNIST_convnet
         model = Sequential()
         for augment in audio_augmentations:
             model.add(augment)
         model.add(self.get_melspectrogram())
         for augment in spectrum_augmentations:
             model.add(augment)
-        model.add(classifier_model(self, num_classes))
+        model.add(self.get_classification_model(num_classes, predefined_model=predefined_model))
         return model
 
     def load_file(self, audio_file):

@@ -1,4 +1,5 @@
 import argparse
+import importlib
 import json
 import sys
 import time
@@ -24,6 +25,7 @@ parser.add_argument('--stft_nfft', default=DEFAULT_STFT_N_FFT, type=int)
 parser.add_argument('--stft_win', default=DEFAULT_STFT_WIN, type=int)
 parser.add_argument('--stft_hop', default=DEFAULT_STFT_HOP, type=int)
 parser.add_argument('--stft_nmels', default=DEFAULT_N_MELS, type=int)
+parser.add_argument('--model', default=None)
 args = parser.parse_args()
 
 MODEL_ID = args.model_id
@@ -54,7 +56,11 @@ def load_data():
     return x, y, num_classes
 
 def train(x, y, num_classes):
-    model = AudioModelBuilder(**model_config).get_model(num_classes)
+    predefined_model = None
+    if args.model:
+        module = importlib.import_module('tensorflow.keras.applications')
+        predefined_model = getattr(module, args.model)
+    model = AudioModelBuilder(**model_config).get_model(num_classes, predefined_model=predefined_model)
     model.compile("adam", loss="categorical_crossentropy" if num_classes > 2 else "binary_crossentropy",
                   metrics=['accuracy'])
     checkpoint_filepath = 'checkpoints/%s/' % MODEL_ID
