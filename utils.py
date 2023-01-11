@@ -1,5 +1,4 @@
 import math
-from abc import ABCMeta
 from typing import Union
 from pydub import AudioSegment
 from librosa.util import buf_to_float
@@ -7,16 +6,16 @@ import numpy as np
 from config import SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
 
 
-class SingletonABCMeta(ABCMeta):
+class Singleton():
     _instances = {}
     def __call__(cls, *args, **kwargs):
-        if cls not in SingletonABCMeta._instances:
-            SingletonABCMeta._instances[cls] = super(SingletonABCMeta, cls).__call__(*args, **kwargs)
-        return SingletonABCMeta._instances[cls]
+        if cls not in Singleton._instances:
+            Singleton._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return Singleton._instances[cls]
 
     def clear(cls):
         try:
-            del SingletonABCMeta._instances[cls]
+            del Singleton._instances[cls]
         except KeyError:
             pass
 

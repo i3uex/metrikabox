@@ -1,36 +1,32 @@
 import os
 import pickle
-from abc import abstractmethod
 from multiprocessing import Lock
 from tensorflow.python.keras.models import load_model
-
 from loaders import FileLoader
-from utils import SingletonABCMeta
-from config import SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
+from utils import Singleton
 
-
-BATCH_SIZE = os.environ.get("CLASSIFIER_BATCH_SIZE", "256")
+BATCH_SIZE = os.environ.get("CLASSIFIER_BATCH_SIZE", "128")
 try:
     BATCH_SIZE = int(BATCH_SIZE)
 except ValueError:
-    BATCH_SIZE = 256
+    BATCH_SIZE = 128
 
-class AudioModel(metaclass=SingletonABCMeta):
-    def __init__(self, model_id, sample_rate=SAMPLE_RATE, window=DEFAULT_WINDOW, step=DEFAULT_STEP):
+class AudioModel(metaclass=Singleton):
+    def __init__(self, model_id):
         model_id = int(model_id)
         self.mtx = Lock()
-        self.model = load_model("checkpoints/%d" % model_id, compile=False)
-        with open("LabelEncoder-%d.pkl" % model_id, "rb") as f:
+        self.model = load_model("checkpoints/%s" % model_id, compile=False)
+        with open("LabelEncoder-%s.pkl" % model_id, "rb") as f:
             self.encoder = pickle.load(f)
-        self.sr, self.window, self.step = sample_rate, window, step
+        with open("model-config-%s.pkl" % model_id, "rb") as f:
+            self.model_config = pickle.load(f)
 
     def predict(self, audio):
-        y = self.model.predict(FileLoader(self.sr, self.window, self.step).load(audio), batch_size=BATCH_SIZE)
+        y = self.model.predict(FileLoader(self.model_config['sample_rate'], self.model_config['window'], self.model_config['step']).load(audio), batch_size=BATCH_SIZE)
         return self._format_output(y)
 
-    @abstractmethod
     def _format_output(self, y):
-        pass
+        return y
 
 if __name__ == '__main__':
     import sys

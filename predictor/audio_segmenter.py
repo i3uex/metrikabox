@@ -6,10 +6,9 @@ class AudioSegmenter(AudioModel):
         list_detections = list()
         last_value = y[0]
         last_from = 0
-        # Unificacion de las predicciones por clase y creacion de las detecciones
-        step = 1
+        step = self.model_config['step']
         for i, prediction in enumerate(y[1:], start=1):
-            if prediction != last_value:  # and prob[i][classes.index(Y_pred[i])] > 0.65:
+            if prediction != last_value:
                 list_detections.append({"value": last_value, "from": last_from * step, "to": i * step})
                 last_from = i
                 last_value = prediction
