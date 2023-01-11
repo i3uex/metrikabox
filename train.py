@@ -7,7 +7,7 @@ from tensorflow.keras import callbacks
 from sklearn.utils import class_weight
 from sklearn.preprocessing import LabelBinarizer
 from kapre.augmentation import SpecAugment
-from model.model import AudioClassificationModelBuilder
+from model.model import AudioModelBuilder
 from loaders import FolderLoader, ClassLoaderFromFolderName
 
 dataset_folder = sys.argv[1]
@@ -35,7 +35,7 @@ spec_augment = SpecAugment(
     data_format='channels_last'
 )
 
-model = AudioClassificationModelBuilder(sample_rate=sample_rate, context_window=window).get_model(num_classes)
+model = AudioModelBuilder(sample_rate=sample_rate, context_window=window).get_model(num_classes)
 
 model.compile("adam", loss="categorical_crossentropy" if num_classes > 2 else "binary_crossentropy", metrics=['accuracy'])
 

@@ -3,8 +3,8 @@ from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras import layers
 from kapre.composed import get_melspectrogram_layer
 
-from config import CONTEXT_WINDOW
-from utils import SAMPLE_RATE, get_mels_from_hop_and_win_lengths
+from config import CONTEXT_WINDOW, SAMPLE_RATE
+from utils import get_mels_from_hop_and_win_lengths
 
 DEFAULT_STFT_N_FFT = 1024
 DEFAULT_STFT_WIN = 1024
@@ -12,7 +12,7 @@ DEFAULT_STFT_HOP = 256
 DEFAULT_N_MELS = 128
 
 
-class AudioClassificationModelBuilder:
+class AudioModelBuilder:
     def __init__(self, sample_rate=SAMPLE_RATE, context_window=CONTEXT_WINDOW, stft_n_fft=DEFAULT_STFT_N_FFT, stft_window=DEFAULT_STFT_WIN, stft_hop=DEFAULT_STFT_HOP, n_mels=DEFAULT_N_MELS):
         self.sample_rate = sample_rate
         self.context_window = context_window
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     test_item_index = 5
 
     # Create model builder
-    builder = AudioClassificationModelBuilder()
+    builder = AudioModelBuilder()
     audio = prepare_audio(librosa.util.example('brahms'), window=builder.context_window, step=1, sr=builder.sample_rate)
 
     # Get melspectrogram layer from builder
