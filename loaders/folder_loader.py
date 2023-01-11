@@ -32,8 +32,8 @@ class FolderLoader:
             items = items[:max_files]
         # Load audio files
         with ProcessPoolExecutor() as ex:
-            futures = [ex.submit(self.file_loader.load_from_file, audio_file) for audio_file in items]
-            with tqdm(total=len(futures)) as pbar:
+            futures = [ex.submit(self.file_loader.load, audio_file) for audio_file in items]
+            with tqdm(total=len(futures), desc="Loading files") as pbar:
                 # Process loaded audios
                 for af, future in zip(items, futures):
                     try:

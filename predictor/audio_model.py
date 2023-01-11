@@ -3,7 +3,9 @@ import pickle
 from abc import abstractmethod
 from multiprocessing import Lock
 from tensorflow.python.keras.models import load_model
-from utils import apply_window, SingletonABCMeta
+
+from loaders import FileLoader
+from utils import SingletonABCMeta
 from config import SAMPLE_RATE, CONTEXT_WINDOW, PROCESSING_STEP
 
 
@@ -23,7 +25,7 @@ class AudioModel(metaclass=SingletonABCMeta):
         self.sr, self.window, self.step = sample_rate, window, step
 
     def predict(self, audio):
-        y = self.model.predict(apply_window(audio, window=self.window, step=self.step, sr=self.sr), batch_size=BATCH_SIZE)
+        y = self.model.predict(FileLoader(self.sr, self.window, self.step).load(audio), batch_size=BATCH_SIZE)
         return self._format_output(y)
 
     @abstractmethod

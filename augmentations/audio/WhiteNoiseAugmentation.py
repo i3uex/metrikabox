@@ -1,5 +1,8 @@
 import tensorflow as tf
 
+from loaders import FileLoader
+
+
 class WhiteNoiseAugmentation(tf.keras.layers.Layer):
     def __init__(self, max_snr=15, min_snr=30, **kwargs):
         super(WhiteNoiseAugmentation, self).__init__(**kwargs)
@@ -28,8 +31,8 @@ class WhiteNoiseAugmentation(tf.keras.layers.Layer):
 if __name__ == '__main__':
     import librosa
     import soundfile as sf
-    from utils import prepare_audio, SAMPLE_RATE
-    audio = prepare_audio(librosa.util.example('brahms'))
+    from utils import SAMPLE_RATE, CONTEXT_WINDOW, PROCESSING_STEP
+    audio = FileLoader(SAMPLE_RATE, CONTEXT_WINDOW, PROCESSING_STEP).load(librosa.util.example('brahms'))
     model = tf.keras.models.Sequential()
     model.add(WhiteNoiseAugmentation())
     a = model.predict(audio)
