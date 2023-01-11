@@ -1,26 +1,33 @@
 import argparse
+import json
 import sys
 import time
 from collections import Counter
 
 import pickle
+
+from sklearn.preprocessing import LabelBinarizer
 from tensorflow.keras import callbacks
 from sklearn.utils import class_weight
-from sklearn.preprocessing import LabelBinarizer
 from kapre.augmentation import SpecAugment
 
-from config import SAMPLE_RATE, CONTEXT_WINDOW, PROCESSING_STEP, USE_MMAP, DEFAULT_BATCH_SIZE
+from config import SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP, USE_MMAP, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS
+from model.model import AudioModelBuilder, DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS
 from loaders import FolderLoader, ClassLoaderFromFolderName
-from model.model import AudioModelBuilder
 
 parser = argparse.ArgumentParser(prog = 'AudioTrain', description = 'Trains')
 parser.add_argument('folder')
 parser.add_argument('--model_id', default=int(time.time()))
 parser.add_argument('-sr', '--sample_rate', default=SAMPLE_RATE, type=int)
-parser.add_argument('--window', default=CONTEXT_WINDOW, type=float)
-parser.add_argument('--step', default=PROCESSING_STEP, type=float)
+parser.add_argument('--window', default=DEFAULT_WINDOW, type=float)
+parser.add_argument('--step', default=DEFAULT_STEP, type=float)
 parser.add_argument('--use_mmap', default=USE_MMAP, type=bool)
 parser.add_argument('--batch_size', default=DEFAULT_BATCH_SIZE, type=int)
+parser.add_argument('--epochs', default=DEFAULT_EPOCHS, type=int)
+parser.add_argument('--stft_nfft', default=DEFAULT_STFT_N_FFT, type=int)
+parser.add_argument('--stft_win', default=DEFAULT_STFT_WIN, type=int)
+parser.add_argument('--stft_hop', default=DEFAULT_STFT_HOP, type=int)
+parser.add_argument('--stft_nmels', default=DEFAULT_N_MELS, type=int)
 args = parser.parse_args()
 
 data_loader = FolderLoader(sample_rate=args.sample_rate, window=args.window, step=args.step, class_loader=ClassLoaderFromFolderName(), out_folder=args.folder, use_mmap=False)
@@ -34,8 +41,19 @@ print(len(Counter(Y)))
 encoder = LabelBinarizer()
 Y = encoder.fit_transform(Y)
 num_classes = len(encoder.classes_)
-with open("LabelEncoder-%d.pkl" % MODEL_ID, "wb") as f:
+model_config = {
+    "sample_rate": args.sample_rate,
+    "window": args.window,
+    "step": args.step,
+    "stft_nfft": args.stft_nfft,
+    "stft_window": args.stft_win,
+    "stft_hop": args.stft_hop,
+    "stft_nmels":args.stft_nmels
+}
+with open("LabelEncoder-%s.pkl" % MODEL_ID, "wb") as f:
     pickle.dump(encoder, f)
+with open("model-config-%s.json" % MODEL_ID, "w") as f:
+    json.dump(model_config, f)
 
 # Add the spec_augment layer for augmentations
 spec_augment = SpecAugment(
@@ -46,12 +64,12 @@ spec_augment = SpecAugment(
     data_format='channels_last'
 )
 
-model = AudioModelBuilder(sample_rate=args.sample_rate, context_window=args.window, processing_step=args.step).get_model(num_classes)
+model = AudioModelBuilder(**model_config).get_model(num_classes)
 
 model.compile("adam", loss="categorical_crossentropy" if num_classes > 2 else "binary_crossentropy", metrics=['accuracy'])
 
 print("Computing sample weight")
-checkpoint_filepath = 'checkpoints/%d/' % MODEL_ID
+checkpoint_filepath = 'checkpoints/%s/' % MODEL_ID
 model_checkpoint_callback = callbacks.ModelCheckpoint(
     filepath=checkpoint_filepath,
     monitor='val_accuracy',
@@ -59,8 +77,9 @@ model_checkpoint_callback = callbacks.ModelCheckpoint(
     save_best_only=True
 )
 tboard = callbacks.TensorBoard()
-reduce_lr = callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.0001, min_delta=0.02, verbose=1)
+reduce_lr = callbacks.ReduceLROnPlateau(verbose=1)
 early_stopping = callbacks.EarlyStopping(monitor='val_loss', min_delta=0.02, patience=15, mode='auto')
 
 print("Starting training")
 model.fit(X, Y, validation_split=0.2, epochs=100, shuffle=True, batch_size=128, sample_weight=class_weight.compute_sample_weight('balanced', Y), callbacks=[model_checkpoint_callback, reduce_lr, tboard])
+

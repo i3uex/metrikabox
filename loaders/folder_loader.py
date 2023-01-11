@@ -6,13 +6,13 @@ import numpy as np
 from tqdm import tqdm
 
 from loaders.class_loader import ClassLoader
-from config import SAMPLE_RATE, USE_MMAP, CONTEXT_WINDOW, PROCESSING_STEP
+from config import SAMPLE_RATE, USE_MMAP, DEFAULT_WINDOW, DEFAULT_STEP
 from loaders.file_loader import FileLoader
 
 BASE_PATH = ""
 
 class FolderLoader:
-    def __init__(self, sample_rate=SAMPLE_RATE, window=CONTEXT_WINDOW, step=PROCESSING_STEP, use_mmap=USE_MMAP, class_loader=ClassLoader(), out_folder=BASE_PATH):
+    def __init__(self, sample_rate=SAMPLE_RATE, window=DEFAULT_WINDOW, step=DEFAULT_STEP, use_mmap=USE_MMAP, class_loader=ClassLoader(), out_folder=BASE_PATH):
         self.mtx = Lock()
         self.Y = []
         self.X = []

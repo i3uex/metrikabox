@@ -6,7 +6,7 @@ from tensorflow.python.keras.models import load_model
 
 from loaders import FileLoader
 from utils import SingletonABCMeta
-from config import SAMPLE_RATE, CONTEXT_WINDOW, PROCESSING_STEP
+from config import SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
 
 
 BATCH_SIZE = os.environ.get("CLASSIFIER_BATCH_SIZE", "256")
@@ -16,7 +16,7 @@ except ValueError:
     BATCH_SIZE = 256
 
 class AudioModel(metaclass=SingletonABCMeta):
-    def __init__(self, model_id, sample_rate=SAMPLE_RATE, window=CONTEXT_WINDOW, step=PROCESSING_STEP):
+    def __init__(self, model_id, sample_rate=SAMPLE_RATE, window=DEFAULT_WINDOW, step=DEFAULT_STEP):
         model_id = int(model_id)
         self.mtx = Lock()
         self.model = load_model("checkpoints/%d" % model_id, compile=False)

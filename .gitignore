@@ -4,3 +4,4 @@ checkpoints/
 .idea/
 *.npy
 *.pkl
+*.json
