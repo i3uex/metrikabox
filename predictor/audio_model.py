@@ -1,4 +1,5 @@
 import os
+import json
 import pickle
 from multiprocessing import Lock
 from tensorflow.python.keras.models import load_model
@@ -13,13 +14,12 @@ except ValueError:
 
 class AudioModel(metaclass=Singleton):
     def __init__(self, model_id):
-        model_id = int(model_id)
         self.mtx = Lock()
         self.model = load_model("checkpoints/%s" % model_id, compile=False)
         with open("LabelEncoder-%s.pkl" % model_id, "rb") as f:
             self.encoder = pickle.load(f)
-        with open("model-config-%s.pkl" % model_id, "rb") as f:
-            self.model_config = pickle.load(f)
+        with open("model-config-%s.json" % model_id, "r") as f:
+            self.model_config = json.load(f)
 
     def predict(self, audio):
         y = self.model.predict(FileLoader(self.model_config['sample_rate'], self.model_config['window'], self.model_config['step']).load(audio), batch_size=BATCH_SIZE)

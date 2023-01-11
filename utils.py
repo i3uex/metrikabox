@@ -6,7 +6,7 @@ import numpy as np
 from config import SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
 
 
-class Singleton():
+class Singleton(type):
     _instances = {}
     def __call__(cls, *args, **kwargs):
         if cls not in Singleton._instances:
