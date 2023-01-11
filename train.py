@@ -66,7 +66,7 @@ def train(x, y, num_classes):
     )
     tboard = callbacks.TensorBoard()
     reduce_lr = callbacks.ReduceLROnPlateau(verbose=1, min_delta=0.1, min_lr=1e-6)
-    early_stopping = callbacks.EarlyStopping(monitor='val_loss', min_delta=0.02, patience=15, mode='auto')
+    early_stopping = callbacks.EarlyStopping(monitor='val_loss', min_delta=0.02, patience=15, mode='auto', verbose=1)
     print("Starting training")
     model.fit(x, y, validation_split=0.2, epochs=100, shuffle=True, batch_size=128,
               sample_weight=class_weight.compute_sample_weight('balanced', y),
