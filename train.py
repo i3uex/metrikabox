@@ -5,6 +5,8 @@ import sys
 import time
 from collections import Counter
 import pickle
+from inspect import getmembers, isfunction
+
 from sklearn.preprocessing import LabelBinarizer
 from tensorflow.keras import callbacks
 from sklearn.utils import class_weight
@@ -12,20 +14,21 @@ from config import SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP, USE_MMAP, DEFAULT_
 from model.model import AudioModelBuilder, DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS
 from loaders import FolderLoader, ClassLoaderFromFolderName
 
+AVAILABLE_KERAS_MODELS = {model_name: model for model_name, model in getmembers(importlib.import_module('tensorflow.keras.applications'), isfunction)}
 parser = argparse.ArgumentParser(prog = 'AudioTrain', description = 'Trains')
 parser.add_argument('folder')
 parser.add_argument('--model_id', default=int(time.time()))
-parser.add_argument('-sr', '--sample_rate', default=SAMPLE_RATE, type=int)
-parser.add_argument('--window', default=DEFAULT_WINDOW, type=float)
-parser.add_argument('--step', default=DEFAULT_STEP, type=float)
+parser.add_argument('-sr', '--sample_rate', default=SAMPLE_RATE, type=int, help='Sample rate the audio will be converted to')
+parser.add_argument('--window', default=DEFAULT_WINDOW, type=float, help='Time in seconds to be processed as a single item')
+parser.add_argument('--step', default=DEFAULT_STEP, type=float, help='Time in seconds to skip between windows. It is recommendable for step to be maximum half of the window to have overlap between windows and don\'t lose information')
 parser.add_argument('--use_mmap', default=USE_MMAP, type=bool)
 parser.add_argument('--batch_size', default=DEFAULT_BATCH_SIZE, type=int)
 parser.add_argument('--epochs', default=DEFAULT_EPOCHS, type=int)
-parser.add_argument('--stft_nfft', default=DEFAULT_STFT_N_FFT, type=int)
-parser.add_argument('--stft_win', default=DEFAULT_STFT_WIN, type=int)
-parser.add_argument('--stft_hop', default=DEFAULT_STFT_HOP, type=int)
-parser.add_argument('--stft_nmels', default=DEFAULT_N_MELS, type=int)
-parser.add_argument('--model', default=None)
+parser.add_argument('--stft_nfft', default=DEFAULT_STFT_N_FFT, type=int, help='Length of the FFT window')
+parser.add_argument('--stft_win', default=DEFAULT_STFT_WIN, type=int, help='Each frame of audio is windowed by window of length win_length and then padded with zeros to match n_fft')
+parser.add_argument('--stft_hop', default=DEFAULT_STFT_HOP, type=int, help='Number of samples between successive frames')
+parser.add_argument('--stft_nmels', default=DEFAULT_N_MELS, type=int, help='Number of Mel bands to generate')
+parser.add_argument('--model', default=None, choices=AVAILABLE_KERAS_MODELS.keys(), help='Any of the models of keras.applications that will be used as classification model')
 args = parser.parse_args()
 
 MODEL_ID = args.model_id
@@ -58,8 +61,7 @@ def load_data():
 def train(x, y, num_classes):
     predefined_model = None
     if args.model:
-        module = importlib.import_module('tensorflow.keras.applications')
-        predefined_model = getattr(module, args.model)
+        predefined_model = AVAILABLE_KERAS_MODELS[args.model]
     model = AudioModelBuilder(**model_config).get_model(num_classes, predefined_model=predefined_model)
     model.compile("adam", loss="categorical_crossentropy" if num_classes > 2 else "binary_crossentropy",
                   metrics=['accuracy'])
