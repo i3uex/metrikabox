@@ -76,7 +76,7 @@ def plot_history(history):
 def train(x, y, num_classes):
     predefined_model = None
     if args.model:
-        predefined_model = AVAILABLE_KERAS_MODELS[args.model](include_top=False, pooling='avg')
+        predefined_model = AVAILABLE_KERAS_MODELS[args.model](include_top=False, pooling='avg', weights=None)
     model = AudioModelBuilder(**model_config).get_model(num_classes,
                                                         predefined_model=predefined_model,
                                                         )
