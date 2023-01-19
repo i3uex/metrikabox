@@ -18,7 +18,7 @@ class AudioModel(metaclass=Singleton):
         self.model = load_model(f'checkpoints/{model_id}', compile=False)
         with open(f'LabelEncoder-{model_id}.pkl', 'rb') as f:
             self.encoder = pickle.load(f)
-        with open('model-config-{model_id}.json', 'r') as f:
+        with open(f'model-config-{model_id}.json') as f:
             self.model_config = json.load(f)
 
     def predict(self, audio):
