@@ -92,16 +92,14 @@ def train(x, y, num_classes):
         save_best_only=True
     )
     tboard = callbacks.TensorBoard(log_dir=f'logs/{MODEL_ID}/')
-    reduce_lr = callbacks.ReduceLROnPlateau(verbose=1, min_delta=0.1, min_lr=1e-6)
-    early_stopping = callbacks.EarlyStopping(monitor='val_loss', min_delta=0.01, patience=20, mode='auto', verbose=1)
     print("Starting training")
     history = model.fit(x, y,
                         validation_split=0.2,
                         epochs=args.epochs,
                         shuffle=True,
                         batch_size=args.batch_size,
-              sample_weight=class_weight.compute_sample_weight('balanced', y),
-              callbacks=[model_checkpoint_callback, reduce_lr, tboard, early_stopping])
+                        sample_weight=class_weight.compute_sample_weight('balanced', y),
+                        callbacks=[model_checkpoint_callback, tboard]
                         )
     plot_history(history)
 
