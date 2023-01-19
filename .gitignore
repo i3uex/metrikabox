@@ -1,7 +1,11 @@
 __pycache__/
 logs/
+*events.out.tfevents.*
 checkpoints/
+*.pb
+*.gz
 .idea/
 *.npy
 *.pkl
 *.json
+*.png
