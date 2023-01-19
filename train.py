@@ -1,7 +1,6 @@
 import argparse
 import importlib
 import json
-import sys
 import time
 from collections import Counter
 import pickle
@@ -11,7 +10,8 @@ from sklearn.preprocessing import LabelBinarizer
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import callbacks
 from sklearn.utils import class_weight
-from config import SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP, USE_MMAP, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS
+
+from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP, USE_MMAP, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS
 from model.model import AudioModelBuilder, DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS
 from loaders import FolderLoader, ClassLoaderFromFolderName
 from matplotlib import pyplot as plt
@@ -63,11 +63,23 @@ def load_data():
         pickle.dump(encoder, f)
     return x, y, num_classes
 
+def plot_history(history):
+    plt.plot(history.history['accuracy'])
+    plt.plot(history.history['val_accuracy'])
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'val'], loc='upper left')
+    plt.show()
+    plt.savefig(MODEL_ID + ".png")
+
 def train(x, y, num_classes):
     predefined_model = None
     if args.model:
-        predefined_model = AVAILABLE_KERAS_MODELS[args.model]
-    model = AudioModelBuilder(**model_config).get_model(num_classes, predefined_model=predefined_model)
+        predefined_model = AVAILABLE_KERAS_MODELS[args.model](include_top=False, pooling='avg')
+    model = AudioModelBuilder(**model_config).get_model(num_classes,
+                                                        predefined_model=predefined_model,
+                                                        )
     optimizer = Adam
     if args.optimizer:
         optimizer = AVAILABLE_KERAS_OPTIMIZERS[args.optimizer]
@@ -83,17 +95,15 @@ def train(x, y, num_classes):
     reduce_lr = callbacks.ReduceLROnPlateau(verbose=1, min_delta=0.1, min_lr=1e-6)
     early_stopping = callbacks.EarlyStopping(monitor='val_loss', min_delta=0.01, patience=20, mode='auto', verbose=1)
     print("Starting training")
-    history = model.fit(x, y, validation_split=0.2, epochs=args.epochs, shuffle=True, batch_size=args.batch_size,
+    history = model.fit(x, y,
+                        validation_split=0.2,
+                        epochs=args.epochs,
+                        shuffle=True,
+                        batch_size=args.batch_size,
               sample_weight=class_weight.compute_sample_weight('balanced', y),
               callbacks=[model_checkpoint_callback, reduce_lr, tboard, early_stopping])
-    plt.plot(history.history['accuracy'])
-    plt.plot(history.history['val_accuracy'])
-    plt.title('model accuracy')
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'val'], loc='upper left')
-    plt.show()
-    plt.savefig(MODEL_ID + ".png")
+                        )
+    plot_history(history)
 
 if __name__ == '__main__':
     train(*load_data())

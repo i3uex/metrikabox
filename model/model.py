@@ -1,20 +1,21 @@
-from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras import layers
+from tensorflow.python.keras.models import Sequential, Model
+from tensorflow.python.keras import layers
 from kapre.composed import get_melspectrogram_layer
 
-from config import SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
+from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
 from loaders import FileLoader
-from model.classification.MNIST import MNIST_convnet
+from model.classification import MNIST_convnet
 from utils import get_mels_from_hop_and_win_lengths
 
 DEFAULT_STFT_N_FFT = 1024
 DEFAULT_STFT_WIN = 1024
 DEFAULT_STFT_HOP = 256
 DEFAULT_N_MELS = 128
+DEFAULT_PREDEFINED_MODEL = MNIST_convnet()
 
 
 class AudioModelBuilder:
-    def __init__(self, sample_rate=SAMPLE_RATE, window=DEFAULT_WINDOW, step=DEFAULT_STEP, stft_nfft=DEFAULT_STFT_N_FFT, stft_window=DEFAULT_STFT_WIN, stft_hop=DEFAULT_STFT_HOP, stft_nmels=DEFAULT_N_MELS):
+    def __init__(self, sample_rate=DEFAULT_SAMPLE_RATE, window=DEFAULT_WINDOW, step=DEFAULT_STEP, stft_nfft=DEFAULT_STFT_N_FFT, stft_window=DEFAULT_STFT_WIN, stft_hop=DEFAULT_STFT_HOP, stft_nmels=DEFAULT_N_MELS):
         self.sample_rate = sample_rate
         self.window = window
         self.step = step
@@ -24,21 +25,14 @@ class AudioModelBuilder:
         self.stft_nmels = stft_nmels
         self.file_loader = FileLoader(sample_rate=self.sample_rate, window=self.window, step=self.step)
 
-    def get_classification_model(self, num_classes, predefined_model=MNIST_convnet):
+    def get_classification_model(self, num_classes, predefined_model=DEFAULT_PREDEFINED_MODEL):
         input_tensor = layers.Input(shape=(get_mels_from_hop_and_win_lengths(self.stft_hop, self.stft_window, input_size=int(self.sample_rate*self.window)), self.stft_nmels, 1))
         convolution_layer = layers.Conv2D(3, (3, 3), padding='same')(input_tensor)  # X has a dimension of (IMG_SIZE,N_MELS,3)
-        base_model = predefined_model(
-            include_top=False,
-            #weights='imagenet',
-            weights=None,
-            pooling='avg'
-        )
+        base_model = predefined_model
         for layer in base_model.layers:
             layer.trainable = True  # trainable has to be false in order to freeze the layers
         base_model = base_model(convolution_layer)
-        op = layers.Dense(256, activation='relu')(base_model)
-        op = layers.Dropout(.25)(op)
-        output_tensor = layers.Dense(num_classes if num_classes > 2 else 1, activation='softmax' if num_classes > 2 else 'sigmoid')(op)
+        output_tensor = layers.Dense(num_classes if num_classes > 2 else 1, activation='softmax' if num_classes > 2 else 'sigmoid')(base_model)
         return Model(inputs=input_tensor, outputs=output_tensor)
 
     def get_melspectrogram(self):
@@ -55,7 +49,7 @@ class AudioModelBuilder:
 
     def get_model(self, num_classes, predefined_model=None, audio_augmentations=(), spectrum_augmentations=()):
         if not predefined_model:
-            predefined_model = MNIST_convnet
+            predefined_model = DEFAULT_PREDEFINED_MODEL
         model = Sequential()
         for augment in audio_augmentations:
             model.add(augment)
@@ -77,7 +71,6 @@ if __name__ == '__main__':
     builder = AudioModelBuilder(window=5, step=2.5)
     audio = builder.load_file(librosa.util.example('brahms'))
 
-    builder.get_model(3).predict(audio)
     # Get melspectrogram layer from builder
     stft = builder.get_melspectrogram()
     # Predict melspectrogram of windowed items
