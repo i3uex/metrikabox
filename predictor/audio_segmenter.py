@@ -9,10 +9,10 @@ class AudioSegmenter(AudioModel):
         step = self.model_config['step']
         for i, prediction in enumerate(y[1:], start=1):
             if prediction != last_value:
-                list_detections.append({"value": last_value, "from": last_from * step, "to": i * step})
+                list_detections.append({'value': last_value, 'from': last_from * step, 'to': i * step})
                 last_from = i
                 last_value = prediction
-        list_detections.append({"value": last_value, "from": last_from * step, "to": len(y) * step})
+        list_detections.append({'value': last_value, 'from': last_from * step, 'to': len(y) * step})
         return list_detections
 
 if __name__ == '__main__':

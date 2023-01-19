@@ -6,7 +6,7 @@ from tensorflow.python.keras.models import load_model
 from loaders import FileLoader
 from utils import Singleton
 
-BATCH_SIZE = os.environ.get("CLASSIFIER_BATCH_SIZE", "128")
+BATCH_SIZE = os.environ.get('CLASSIFIER_BATCH_SIZE', '128')
 try:
     BATCH_SIZE = int(BATCH_SIZE)
 except ValueError:
@@ -15,10 +15,10 @@ except ValueError:
 class AudioModel(metaclass=Singleton):
     def __init__(self, model_id):
         self.mtx = Lock()
-        self.model = load_model("checkpoints/%s" % model_id, compile=False)
-        with open("LabelEncoder-%s.pkl" % model_id, "rb") as f:
+        self.model = load_model(f'checkpoints/{model_id}', compile=False)
+        with open(f'LabelEncoder-{model_id}.pkl', 'rb') as f:
             self.encoder = pickle.load(f)
-        with open("model-config-%s.json" % model_id, "r") as f:
+        with open('model-config-{model_id}.json', 'r') as f:
             self.model_config = json.load(f)
 
     def predict(self, audio):
