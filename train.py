@@ -11,7 +11,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import callbacks
 from sklearn.utils import class_weight
 
-from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP, USE_MMAP, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS
+from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS
 from model.model import AudioModelBuilder, DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS
 from loaders import FolderLoader, ClassLoaderFromFolderName
 from matplotlib import pyplot as plt
