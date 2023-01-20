@@ -36,6 +36,9 @@ parser.add_argument('--optimizer', default=None, choices=AVAILABLE_KERAS_OPTIMIZ
 parser.add_argument('--learning_rate', default=0.001, type=float)
 args = parser.parse_args()
 
+if not args.folder.endswith("/"):
+    args.folder += "/"
+
 MODEL_ID = args.model_id
 
 model_config = {
