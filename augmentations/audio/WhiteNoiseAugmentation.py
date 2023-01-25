@@ -1,13 +1,14 @@
 import tensorflow as tf
+from augmentations.AugmentationLayer import AudioAugmentationLayer
 
 
-class WhiteNoiseAugmentation(tf.keras.layers.Layer):
+class WhiteNoiseAugmentation(AudioAugmentationLayer):
     def __init__(self, max_snr=15, min_snr=30, **kwargs):
         super(WhiteNoiseAugmentation, self).__init__(**kwargs)
         self.max_snr = max_snr
         self.min_snr = min_snr
 
-    def call(self, sounds, training=None):
+    def call(self, sounds, training=None, **kwargs):
         if not training:
             return sounds
         snr = tf.random.uniform((tf.shape(sounds)[0], 1), self.min_snr, self.max_snr)

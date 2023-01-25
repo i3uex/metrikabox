@@ -1,6 +1,8 @@
 import glob
 import pickle
 from concurrent.futures import ProcessPoolExecutor
+from typing import Tuple
+
 import numpy as np
 from tqdm import tqdm
 
@@ -11,7 +13,14 @@ from loaders.file_loader import FileLoader
 BASE_PATH = ''
 
 class FolderLoader:
-    def __init__(self, sample_rate=DEFAULT_SAMPLE_RATE, window=DEFAULT_WINDOW, step=DEFAULT_STEP, use_mmap=False, class_loader=ClassLoader(), out_folder=BASE_PATH):
+    def __init__(self,
+                 sample_rate:int=DEFAULT_SAMPLE_RATE,
+                 window:float=DEFAULT_WINDOW,
+                 step:float=DEFAULT_STEP,
+                 use_mmap:bool=False,
+                 class_loader:ClassLoader=ClassLoader(),
+                 out_folder:str=BASE_PATH
+                 ):
         self.Y = []
         self.X = []
         self.sr = sample_rate
@@ -24,7 +33,7 @@ class FolderLoader:
         self.CLASSES_PATH = f'{out_folder}CLASSES.npy'
         self.MMAP_SHAPE_FILE = f'{out_folder}MMAP_shape.pkl'
 
-    def load(self, folder, max_files=None):
+    def load(self, folder:str, max_files:int=None) -> Tuple[np.ndarray, list]:
         items = glob.glob(folder + '*/*', recursive=True)
         if max_files:
             items = items[:max_files]

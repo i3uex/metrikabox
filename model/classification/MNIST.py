@@ -1,8 +1,7 @@
-from tensorflow.keras import Sequential
-from tensorflow.keras import layers
+from tensorflow.keras import Sequential, Model, layers
 
 
-def MNIST_convnet(**kwargs):
+def MNIST_convnet(**kwargs) -> Model:
     model = Sequential()
     model.add(layers.Conv2D(32, kernel_size=(3, 3), activation='relu'))
     model.add(layers.MaxPooling2D(pool_size=(2, 2)))

@@ -1,7 +1,12 @@
+from typing import List, Union
+
+from pydub import AudioSegment
 from tensorflow.python.keras.models import Sequential, Model
 from tensorflow.python.keras import layers
 from kapre.composed import get_melspectrogram_layer
+import numpy as np
 
+from augmentations.AugmentationLayer import AudioAugmentationLayer, SpectrogramAugmentationLayer
 from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
 from loaders import FileLoader
 from model.classification import MNIST_convnet
@@ -15,7 +20,15 @@ DEFAULT_PREDEFINED_MODEL = MNIST_convnet()
 
 
 class AudioModelBuilder:
-    def __init__(self, sample_rate=DEFAULT_SAMPLE_RATE, window=DEFAULT_WINDOW, step=DEFAULT_STEP, stft_nfft=DEFAULT_STFT_N_FFT, stft_window=DEFAULT_STFT_WIN, stft_hop=DEFAULT_STFT_HOP, stft_nmels=DEFAULT_N_MELS):
+    def __init__(self,
+                 sample_rate:int=DEFAULT_SAMPLE_RATE,
+                 window:float=DEFAULT_WINDOW,
+                 step:float=DEFAULT_STEP,
+                 stft_nfft:int=DEFAULT_STFT_N_FFT,
+                 stft_window:int=DEFAULT_STFT_WIN,
+                 stft_hop:int=DEFAULT_STFT_HOP,
+                 stft_nmels:int=DEFAULT_N_MELS
+                 ):
         self.sample_rate = sample_rate
         self.window = window
         self.step = step
@@ -25,7 +38,7 @@ class AudioModelBuilder:
         self.stft_nmels = stft_nmels
         self.file_loader = FileLoader(sample_rate=self.sample_rate, window=self.window, step=self.step)
 
-    def get_classification_model(self, num_classes, predefined_model=DEFAULT_PREDEFINED_MODEL):
+    def get_classification_model(self, num_classes:int, predefined_model:Model=DEFAULT_PREDEFINED_MODEL) -> Model:
         input_tensor = layers.Input(shape=(get_mels_from_hop_and_win_lengths(self.stft_hop, self.stft_window, input_size=int(self.sample_rate*self.window)), self.stft_nmels, 1))
         convolution_layer = layers.Conv2D(3, (3, 3), padding='same')(input_tensor)  # X has a dimension of (IMG_SIZE,N_MELS,3)
         base_model = predefined_model
@@ -35,7 +48,7 @@ class AudioModelBuilder:
         output_tensor = layers.Dense(num_classes if num_classes > 2 else 1, activation='softmax' if num_classes > 2 else 'sigmoid')(base_model)
         return Model(inputs=input_tensor, outputs=output_tensor)
 
-    def get_melspectrogram(self):
+    def get_melspectrogram(self) -> Model:
         return get_melspectrogram_layer(
             n_fft=self.stft_nfft,
             win_length=self.stft_window,
@@ -47,7 +60,12 @@ class AudioModelBuilder:
             input_shape=(int(self.sample_rate*self.window), 1)
         )
 
-    def get_model(self, num_classes, predefined_model=None, audio_augmentations=(), spectrum_augmentations=()):
+    def get_model(self,
+                  num_classes:int,
+                  predefined_model:Model=None,
+                  audio_augmentations:List[AudioAugmentationLayer]=(),
+                  spectrum_augmentations:List[SpectrogramAugmentationLayer]=()
+                  ) -> Model:
         if not predefined_model:
             predefined_model = DEFAULT_PREDEFINED_MODEL
         model = Sequential()
@@ -59,7 +77,7 @@ class AudioModelBuilder:
         model.add(self.get_classification_model(num_classes, predefined_model=predefined_model))
         return model
 
-    def load_file(self, audio_file):
+    def load_file(self, audio_file:Union[str, np.array, AudioSegment]) -> np.ndarray:
         return self.file_loader.load(audio_file)
 
 if __name__ == '__main__':
