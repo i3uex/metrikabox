@@ -1,8 +1,8 @@
 from typing import List, Union
 
 from pydub import AudioSegment
-from tensorflow.python.keras.models import Sequential, Model
-from tensorflow.python.keras import layers
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras import layers
 from kapre.composed import get_melspectrogram_layer
 import numpy as np
 
@@ -15,6 +15,7 @@ from utils import get_mels_from_hop_and_win_lengths
 DEFAULT_STFT_N_FFT = 1024
 DEFAULT_STFT_WIN = 1024
 DEFAULT_STFT_HOP = 256
+DEFAULT_MEL_F_MIN = 0
 DEFAULT_N_MELS = 128
 DEFAULT_PREDEFINED_MODEL = MNIST_convnet()
 
@@ -24,6 +25,7 @@ class AudioModelBuilder:
                  sample_rate:int=DEFAULT_SAMPLE_RATE,
                  window:float=DEFAULT_WINDOW,
                  step:float=DEFAULT_STEP,
+                 mel_f_min:int=DEFAULT_MEL_F_MIN,
                  stft_nfft:int=DEFAULT_STFT_N_FFT,
                  stft_window:int=DEFAULT_STFT_WIN,
                  stft_hop:int=DEFAULT_STFT_HOP,
@@ -32,6 +34,7 @@ class AudioModelBuilder:
         self.sample_rate = sample_rate
         self.window = window
         self.step = step
+        self.mel_f_min = mel_f_min
         self.stft_nfft = stft_nfft
         self.stft_window = stft_window
         self.stft_hop = stft_hop
@@ -55,6 +58,7 @@ class AudioModelBuilder:
             hop_length=self.stft_hop,
             n_mels=self.stft_nmels,
             sample_rate=self.sample_rate,
+            mel_f_min=self.mel_f_min,
             return_decibel=True,
             input_data_format='channels_last', output_data_format='channels_last',
             input_shape=(int(self.sample_rate*self.window), 1)
@@ -79,6 +83,7 @@ class AudioModelBuilder:
 
     def load_file(self, audio_file:Union[str, np.array, AudioSegment]) -> np.ndarray:
         return self.file_loader.load(audio_file)
+
 
 if __name__ == '__main__':
     import math
