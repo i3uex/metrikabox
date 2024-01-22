@@ -1,4 +1,5 @@
 import glob
+import os
 import pickle
 from concurrent.futures import ProcessPoolExecutor
 from typing import Tuple
@@ -33,8 +34,8 @@ class FolderLoader:
         self.CLASSES_PATH = f'{out_folder}CLASSES.npy'
         self.MMAP_SHAPE_FILE = f'{out_folder}MMAP_shape.pkl'
 
-    def load(self, folder:str, max_files:int=None) -> Tuple[np.ndarray, list]:
-        items = glob.glob(folder + '*/*', recursive=True)
+    def load(self, folder:str, max_files:int=None, classes2avoid=(), audio_formats=(".wav", ".mp3")) -> Tuple[np.ndarray, list]:
+        items = list(filter(lambda x: not os.path.isdir(x) and (any([x.lower().endswith(f) for f in audio_formats]) if audio_formats else True), glob.glob(folder + '**', recursive=True)))
         if max_files:
             items = items[:max_files]
         # Load audio files
@@ -47,11 +48,13 @@ class FolderLoader:
             futures = [ex.submit(self.file_loader.load, audio_file) for audio_file in items]
             with tqdm(total=len(futures), desc='Loading files') as pbar:
                 # Process loaded audios
-                for af, future in zip(items, futures):
+                for i, (af, future) in enumerate(zip(items, futures)):
                     try:
                         x = future.result()
                     except Exception as e:
-                        print(f'Exception {type(e)} in file {items}. Skipping')
+                        print(f'Exception {type(e)} in file {items[i]}. Skipping')
+                    y = self.class_loader.get_class(af, x.shape[0])
+                    x, y = list(zip(*filter(lambda _item: _item[1] not in classes2avoid, zip(x, y))))
                     if self.use_mmap:
                         try:
                             offset = out_shape[0] * out_shape[1] * 4
@@ -64,7 +67,7 @@ class FolderLoader:
                         out_shape[0] += mmap.shape[0]
                     else:
                         self.X.extend(x)
-                    self.Y.extend(self.class_loader.get_class(af, x.shape[0]))
+                    self.Y.extend(y)
                     pbar.update()
         with open(self.MMAP_SHAPE_FILE, 'wb') as f:
             pickle.dump(out_shape, f)
