@@ -5,6 +5,7 @@ from multiprocessing import Lock
 from tensorflow.python.keras.models import load_model
 from loaders import FileLoader
 from utils import Singleton
+from config import MODEL_CONFIG_FOLDER
 
 BATCH_SIZE = os.environ.get('CLASSIFIER_BATCH_SIZE', '128')
 try:
@@ -16,9 +17,9 @@ class AudioModel(metaclass=Singleton):
     def __init__(self, model_id):
         self.mtx = Lock()
         self.model = load_model(f'checkpoints/{model_id}', compile=False)
-        with open(f'LabelEncoder-{model_id}.pkl', 'rb') as f:
+        with open(f'{MODEL_CONFIG_FOLDER}/{model_id}/LabelEncoder.pkl', 'rb') as f:
             self.encoder = pickle.load(f)
-        with open(f'model-config-{model_id}.json') as f:
+        with open(f'{MODEL_CONFIG_FOLDER}/{model_id}/model-config.json') as f:
             self.model_config = json.load(f)
 
     def predict(self, audio):
