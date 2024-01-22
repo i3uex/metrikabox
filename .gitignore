@@ -9,3 +9,5 @@ checkpoints/
 *.pkl
 *.json
 *.png
+env/
+venv/
