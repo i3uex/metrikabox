@@ -41,6 +41,7 @@ parser.add_argument('--model', default=None, choices=AVAILABLE_KERAS_MODELS.keys
 parser.add_argument('--optimizer', default=None, choices=AVAILABLE_KERAS_OPTIMIZERS.keys(), help='Any of the optimizers of keras.optimizers that will be used as optimizer in model training')
 parser.add_argument('--class_loader', default=None, choices=AVAILABLE_CLASS_LOADERS.keys(), help='Any of the available class loaders')
 parser.add_argument('--learning_rate', default=0.001, type=float)
+parser.add_argument('--trainset_shuffle_size', default=1024, type=int)
 args = parser.parse_args()
 
 if not args.folder.endswith("/"):
@@ -131,7 +132,7 @@ def train(x, y, num_classes):
     x, y = x[:-num_items], y[:-num_items]
 
     train_dataset = Dataset.from_tensor_slices((x, y, class_weight.compute_sample_weight('balanced', y)))
-    train_dataset = train_dataset.shuffle(1024).batch(args.batch_size)
+    train_dataset = train_dataset.shuffle(args.trainset_shuffle_size).batch(args.batch_size)
     
     del x, y
     
