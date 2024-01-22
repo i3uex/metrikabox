@@ -19,24 +19,30 @@ class Singleton(type):
         except KeyError:
             pass
 
-def __window(a, window=DEFAULT_WINDOW, step=DEFAULT_STEP, sr=DEFAULT_SAMPLE_RATE) -> np.ndarray:
-    w = int(window * sr)
-    o = int(step * sr)
-    sh = (a.size - w + 1, w)
-    st = a.strides * 2
-    return np.lib.stride_tricks.as_strided(a, strides=st, shape=sh)[0::o]
+
+def __window(x: np.array, window_seconds=DEFAULT_WINDOW, step_seconds=DEFAULT_STEP,
+             sr=DEFAULT_SAMPLE_RATE) -> np.ndarray:
+    window_frames = int(window_seconds * sr)
+    step_frames = int(step_seconds * sr)
+    shape = (x.size - window_frames + 1, window_frames)
+    strides = x.strides * 2  # * window ??
+    return np.lib.stride_tricks.as_strided(x, strides=strides, shape=shape, writeable=False)[0::step_frames]
+
 
 def apply_window(audio: Union[str, np.array, AudioSegment],
-                 window:float=DEFAULT_WINDOW,
-                 step:float=DEFAULT_STEP,
-                 sr:int=DEFAULT_SAMPLE_RATE
+                 window: float = DEFAULT_WINDOW,
+                 step: float = DEFAULT_STEP,
+                 sr: int = DEFAULT_SAMPLE_RATE,
+                 pad_mode="symmetric",
                  ) -> np.ndarray:
     if type(audio) is str:
         audio = AudioSegment.from_file(audio).set_frame_rate(sr).set_channels(1)
     if type(audio) is AudioSegment:
         audio = buf_to_float(audio.get_array_of_samples(), n_bytes=audio.sample_width)
-    return np.expand_dims(__window(np.pad(audio, math.ceil(sr/2*window), mode="symmetric"), window=window, step=step, sr=sr), 2)
+    return np.expand_dims(
+        __window(np.pad(audio, math.ceil(sr / 2 * window), mode=pad_mode), window_seconds=window, step_seconds=step, sr=sr), 2)
 
-def get_mels_from_hop_and_win_lengths(hop_length:int, win_length, input_size=DEFAULT_SAMPLE_RATE*DEFAULT_WINDOW) -> int:
+
+def get_mels_from_hop_and_win_lengths(hop_length: int, win_length,
+                                      input_size=DEFAULT_SAMPLE_RATE * DEFAULT_WINDOW) -> int:
     return int(math.floor((input_size - win_length) / hop_length) + 1)
-
