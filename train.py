@@ -1,20 +1,24 @@
-import argparse
-import importlib
+import os
 import json
 import time
-from collections import Counter
 import pickle
-from inspect import getmembers, isfunction
+import argparse
+import importlib
+from collections import Counter
+from inspect import getmembers, isfunction, isclass
 
-from sklearn.preprocessing import LabelBinarizer
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras import callbacks
+from matplotlib import pyplot as plt
 from sklearn.utils import class_weight
+from sklearn.preprocessing import LabelBinarizer
+from tensorflow.data import Dataset
+from tensorflow.keras import callbacks
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.metrics import Precision, Recall, CategoricalAccuracy
 
-from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS
+from loaders import FolderLoader, ClassLoaderFromSameFileName
 from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS, CHECKPOINTS_FOLDER, MODEL_CONFIG_FOLDER
 from model.model import AudioModelBuilder, DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, DEFAULT_MEL_F_MIN
-from matplotlib import pyplot as plt
+from augmentations.audio import WhiteNoiseAugmentation
 
 AVAILABLE_KERAS_MODELS = {model_name: model for model_name, model in getmembers(importlib.import_module('tensorflow.keras.applications'), isfunction)}
 AVAILABLE_KERAS_OPTIMIZERS = {optimizer_name: optimizer for optimizer_name, optimizer in getmembers(importlib.import_module('tensorflow.keras.optimizers'), isclass)}
@@ -58,15 +62,27 @@ model_config = {
     "stft_nfft": args.stft_nfft,
     "stft_window": args.stft_win,
     "stft_hop": args.stft_hop,
-    "stft_nmels": args.stft_nmels
+    "stft_nmels": args.stft_nmels,
+    "mel_f_min": args.mel_f_min
 }
 
 with open(f'{MODEL_ID_CONFIG_FOLDER}/model-config.json', "w") as f:
     json.dump(model_config, f)
 
+
 def load_data():
-    data_loader = FolderLoader(sample_rate=args.sample_rate, window=args.window, step=args.step, class_loader=ClassLoaderFromFolderName(), out_folder=args.folder, use_mmap=args.use_mmap)
-    x, y = data_loader.load(args.folder)
+    class_loader = ClassLoaderFromSameFileName()
+    if args.class_loader:
+        class_loader = AVAILABLE_CLASS_LOADERS[args.class_loader]()
+    data_loader = FolderLoader(
+        sample_rate=args.sample_rate,
+        window=args.window,
+        step=args.step,
+        class_loader=class_loader,
+        out_folder=args.folder,
+        use_mmap=args.use_mmap
+    )
+    x, y = data_loader.load(args.folder, classes2avoid=["commercial"])
     assert len(y) == x.shape[0]
     print(Counter(y))
     encoder = LabelBinarizer()
@@ -89,16 +105,23 @@ def plot_history(history):
 def train(x, y, num_classes):
     predefined_model = None
     if args.model:
-        predefined_model = AVAILABLE_KERAS_MODELS[args.model](include_top=False, pooling='avg', weights=None)
+        predefined_model = AVAILABLE_KERAS_MODELS[args.model](
+            include_top=False, 
+            pooling='avg', 
+            weights=None
+        )
     model = AudioModelBuilder(**model_config).get_model(num_classes,
                                                         predefined_model=predefined_model,
                                                         )
     optimizer = Adam
     if args.optimizer:
         optimizer = AVAILABLE_KERAS_OPTIMIZERS[args.optimizer]
-    model.compile(optimizer(learning_rate=args.learning_rate), loss="categorical_crossentropy" if num_classes > 2 else "binary_crossentropy", metrics=['accuracy'])
-    checkpoint_filepath = f'checkpoints/{MODEL_ID}/'
-    model_checkpoint_callback = callbacks.ModelCheckpoint(
+
+    model.compile(
+        optimizer(learning_rate=args.learning_rate),
+        loss="categorical_crossentropy" if num_classes > 2 else "binary_crossentropy",
+        metrics=['accuracy', Precision(), Recall()]
+    )
     checkpoint_filepath = f'{CHECKPOINTS_FOLDER}/{MODEL_ID}/'
         filepath=checkpoint_filepath,
         monitor='val_accuracy',
@@ -116,6 +139,7 @@ def train(x, y, num_classes):
                         callbacks=[model_checkpoint_callback, tboard]
                         )
     plot_history(history)
+    model.save("weights.h5")
 
 if __name__ == '__main__':
     train(*load_data())
