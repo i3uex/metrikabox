@@ -122,24 +122,49 @@ def train(x, y, num_classes):
         loss="categorical_crossentropy" if num_classes > 2 else "binary_crossentropy",
         metrics=['accuracy', Precision(), Recall()]
     )
+    val_size = 0.2
+    num_items = round(len(x)*val_size)
+    print("Preparing datasets")
+    # Prepare the validation dataset.
+    val_dataset = Dataset.from_tensor_slices((x[-num_items:], y[-num_items:], class_weight.compute_sample_weight('balanced', y[-num_items:]))).batch(args.batch_size)
+
+    x, y = x[:-num_items], y[:-num_items]
+
+    train_dataset = Dataset.from_tensor_slices((x, y, class_weight.compute_sample_weight('balanced', y)))
+    train_dataset = train_dataset.shuffle(1024).batch(args.batch_size)
+    
+    del x, y
+    
     checkpoint_filepath = f'{CHECKPOINTS_FOLDER}/{MODEL_ID}/'
-        filepath=checkpoint_filepath,
-        monitor='val_accuracy',
-        mode='max',
-        save_best_only=True
-    )
-    tboard = callbacks.TensorBoard(log_dir=f'logs/{MODEL_ID}/')
     print("Starting training")
-    history = model.fit(x, y,
-                        validation_split=0.2,
+   
+    history = model.fit(train_dataset,
+                        validation_data=val_dataset,
                         epochs=args.epochs,
-                        shuffle=True,
-                        batch_size=args.batch_size,
-                        sample_weight=class_weight.compute_sample_weight('balanced', y),
-                        callbacks=[model_checkpoint_callback, tboard]
-                        )
+                        callbacks=[
+                            callbacks.ModelCheckpoint(
+                                filepath=checkpoint_filepath,
+                                monitor='val_loss',
+                                mode='max',
+                                save_best_only=True
+                            ),
+                            callbacks.EarlyStopping(
+                                monitor='val_accuracy',
+                                min_delta=0.0025,
+                                verbose=1,
+                                patience=25
+                            ),
+                            callbacks.ReduceLROnPlateau(
+                                verbose=1
+                            ),
+                            callbacks.TensorBoard(
+                                log_dir=f'logs/{MODEL_ID}/'
+                            )
+                        ]
+    )
     plot_history(history)
     model.save("weights.h5")
+
 
 if __name__ == '__main__':
     train(*load_data())
