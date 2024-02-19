@@ -2,10 +2,10 @@ import os
 import json
 import pickle
 from multiprocessing import Lock
-from tensorflow.python.keras.models import load_model
+import tensorflow as tf
 from loaders import FileLoader
 from utils import Singleton
-from config import MODEL_CONFIG_FOLDER
+from config import MODEL_CONFIG_FOLDER, CHECKPOINTS_FOLDER
 
 BATCH_SIZE = os.environ.get('CLASSIFIER_BATCH_SIZE', '128')
 try:
@@ -13,10 +13,11 @@ try:
 except ValueError:
     BATCH_SIZE = 128
 
+
 class AudioModel(metaclass=Singleton):
     def __init__(self, model_id):
         self.mtx = Lock()
-        self.model = load_model(f'checkpoints/{model_id}', compile=False)
+        self.model = tf.keras.models.load_model(f'{CHECKPOINTS_FOLDER}/{model_id}', compile=False, custom_objects={"tf": tf})
         with open(f'{MODEL_CONFIG_FOLDER}/{model_id}/LabelEncoder.pkl', 'rb') as f:
             self.encoder = pickle.load(f)
         with open(f'{MODEL_CONFIG_FOLDER}/{model_id}/model-config.json') as f:

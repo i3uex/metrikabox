@@ -12,9 +12,13 @@ from loaders import FileLoader
 from model.classification import MNIST_convnet
 from utils import get_mels_from_hop_and_win_lengths
 
-DEFAULT_STFT_N_FFT = 1024
-DEFAULT_STFT_WIN = 1024
+
+# Tested for 5 step and 10 win @ 16000 Hz
+DEFAULT_STFT_HOP = 1280
+# Tested for 1 step and 2 win @ 16000 Hz
 DEFAULT_STFT_HOP = 256
+DEFAULT_STFT_N_FFT = DEFAULT_STFT_HOP*4
+DEFAULT_STFT_WIN = DEFAULT_STFT_HOP*4
 DEFAULT_MEL_F_MIN = 0
 DEFAULT_N_MELS = 128
 DEFAULT_PREDEFINED_MODEL = MNIST_convnet()

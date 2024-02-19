@@ -2,6 +2,7 @@ import glob
 import os
 import pickle
 from concurrent.futures import ProcessPoolExecutor
+import multiprocessing
 from typing import Tuple
 
 import numpy as np
@@ -42,9 +43,17 @@ class FolderLoader:
         try:
             with open(self.MMAP_SHAPE_FILE, 'rb') as f:
                 out_shape = pickle.load(f)
-        except FileNotFoundError:
+            with open(self.CLASSES_PATH, 'rb') as f:
+                Y = pickle.load(f)
+            print(out_shape)
+            out_shape[1] = int(out_shape[1])
+            X = np.memmap(self.MMAP_PATH, dtype=np.float32, mode='r+', shape=tuple(out_shape))
+            return X, Y
+        except FileNotFoundError as e:
+            print(e)
             out_shape = [0, self.sr * self.window]
-        with ProcessPoolExecutor() as ex:
+        num_processes = multiprocessing.cpu_count() // 8 if self.use_mmap else multiprocessing.cpu_count()
+        with ProcessPoolExecutor(max_workers=num_processes, mp_context=multiprocessing.get_context("fork")) as ex:
             futures = [ex.submit(self.file_loader.load, audio_file) for audio_file in items]
             with tqdm(total=len(futures), desc='Loading files') as pbar:
                 # Process loaded audios
@@ -56,8 +65,9 @@ class FolderLoader:
                     y = self.class_loader.get_class(af, x.shape[0])
                     x, y = list(zip(*filter(lambda _item: _item[1] not in classes2avoid, zip(x, y))))
                     if self.use_mmap:
+                        x = np.array(x)
                         try:
-                            offset = out_shape[0] * out_shape[1] * 4
+                            offset = int(out_shape[0] * out_shape[1] * x.itemsize)
                             mmap = np.memmap(self.MMAP_PATH, dtype=x.dtype, shape=x.shape, mode='r+', offset=offset)
                         except FileNotFoundError:
                             mmap = np.memmap(self.MMAP_PATH, dtype=x.dtype, shape=x.shape, mode='w+')
@@ -69,8 +79,7 @@ class FolderLoader:
                         self.X.extend(x)
                     self.Y.extend(y)
                     pbar.update()
-        with open(self.MMAP_SHAPE_FILE, 'wb') as f:
-            pickle.dump(out_shape, f)
+        print("Shuffleling dataset") 
         seed = 42
         rstate = np.random.RandomState(seed)
         rstate.shuffle(self.Y)
@@ -79,8 +88,10 @@ class FolderLoader:
             rstate = np.random.RandomState(seed)
             rstate.shuffle(self.X)
         else:
+            with open(self.MMAP_SHAPE_FILE, 'wb') as f:
+                pickle.dump(out_shape, f)
             X = np.memmap(self.MMAP_PATH, dtype=np.float32, mode='r+')
-            X = X.reshape(X.size//(self.sr*self.window), self.sr*self.window, 1)
+            X = X.reshape(X.size//int(self.sr*self.window), int(self.sr*self.window), 1)
             rstate = np.random.RandomState(seed)
             rstate.shuffle(X)
             X.flush()

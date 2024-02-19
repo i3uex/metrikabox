@@ -84,7 +84,7 @@ def load_data():
         use_mmap=args.use_mmap
     )
     x, y = data_loader.load(args.folder, classes2avoid=["commercial"])
-    assert len(y) == x.shape[0]
+    assert len(y) == len(x)
     print(Counter(y))
     encoder = LabelBinarizer()
     y = encoder.fit_transform(y)
@@ -93,6 +93,7 @@ def load_data():
         pickle.dump(encoder, f)
     return x, y, num_classes
 
+
 def plot_history(history):
     plt.plot(history.history['accuracy'])
     plt.plot(history.history['val_accuracy'])
@@ -100,8 +101,16 @@ def plot_history(history):
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper left')
+    plt.savefig(f"{str(MODEL_ID)}_acc.png")
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'val'], loc='upper left')
+    plt.savefig(f"{str(MODEL_ID)}_loss.png")
     plt.show()
-    plt.savefig(str(MODEL_ID) + ".png")
+
 
 def train(x, y, num_classes):
     predefined_model = None
@@ -121,7 +130,7 @@ def train(x, y, num_classes):
     model.compile(
         optimizer(learning_rate=args.learning_rate),
         loss="categorical_crossentropy" if num_classes > 2 else "binary_crossentropy",
-        metrics=['accuracy', Precision(), Recall()]
+        weighted_metrics=['accuracy', Precision(), Recall()]
     )
     val_size = 0.2
     num_items = round(len(x)*val_size)
@@ -138,7 +147,7 @@ def train(x, y, num_classes):
     
     checkpoint_filepath = f'{CHECKPOINTS_FOLDER}/{MODEL_ID}/'
     print("Starting training")
-   
+    print(model.summary())
     history = model.fit(train_dataset,
                         validation_data=val_dataset,
                         epochs=args.epochs,
@@ -153,10 +162,11 @@ def train(x, y, num_classes):
                                 monitor='val_accuracy',
                                 min_delta=0.0025,
                                 verbose=1,
-                                patience=25
+                                patience=50
                             ),
                             callbacks.ReduceLROnPlateau(
-                                verbose=1
+                                verbose=1,
+                                patience=25
                             ),
                             callbacks.TensorBoard(
                                 log_dir=f'logs/{MODEL_ID}/'
