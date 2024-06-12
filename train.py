@@ -156,7 +156,7 @@ def train(x, y, num_classes):
     print("Preparing datasets")
 
     output_signature = (
-        tf.TensorSpec(shape=(args.sample_rate*args.window, 1), dtype=tf.int16),
+        tf.TensorSpec(shape=(int(args.sample_rate*args.window), 1), dtype=tf.int16),
         tf.TensorSpec(shape=(num_classes), dtype=tf.int32),
         tf.RaggedTensorSpec(shape=(), dtype=tf.float32)
     )
@@ -168,13 +168,13 @@ def train(x, y, num_classes):
 
     # Prepare the validation dataset.
     val_dataset = Dataset.from_generator(
-        lambda x: gen(x[-num_items:], y[-num_items:]),
+        lambda: gen(x[-num_items:], y[-num_items:]),
         output_signature=output_signature,
     ).batch(args.batch_size)
 
     # Prepare the train dataset.
     train_dataset = Dataset.from_generator(
-        lambda x: gen(x[:-num_items], y[:-num_items]),
+        lambda: gen(x[:-num_items], y[:-num_items]),
         output_signature=output_signature,
     ).shuffle(args.trainset_shuffle_size).batch(args.batch_size)
     
