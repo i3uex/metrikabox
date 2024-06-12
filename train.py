@@ -10,6 +10,7 @@ from inspect import getmembers, isfunction, isclass
 from matplotlib import pyplot as plt
 from sklearn.utils import class_weight
 from sklearn.preprocessing import LabelBinarizer
+import tensorflow as tf
 from tensorflow.data import Dataset
 from tensorflow.keras import callbacks
 from tensorflow.keras.optimizers import Adam
@@ -150,16 +151,31 @@ def train(x, y, num_classes):
     )
     val_size = 0.2
     num_items = round(len(x)*val_size)
-    print("Preparing datasets")
-    # Prepare the validation dataset.
-    val_dataset = Dataset.from_tensor_slices((x[-num_items:], y[-num_items:], class_weight.compute_sample_weight('balanced', y[-num_items:]))).batch(args.batch_size)
-
-    x, y = x[:-num_items], y[:-num_items]
-
-    train_dataset = Dataset.from_tensor_slices((x, y, class_weight.compute_sample_weight('balanced', y)))
-    train_dataset = train_dataset.shuffle(args.trainset_shuffle_size).batch(args.batch_size)
     
-    del x, y
+    print("Preparing datasets")
+
+    output_signature = (
+        tf.TensorSpec(shape=(args.sample_rate*args.window, 1), dtype=tf.int16),
+        tf.TensorSpec(shape=(num_classes), dtype=tf.int32),
+        tf.RaggedTensorSpec(shape=(), dtype=tf.float32)
+    )
+
+    def gen(X, Y):
+        computed_sample_weights = class_weight.compute_sample_weight('balanced', Y)
+        for x, y, computed_sample_weight in zip(X, Y, computed_sample_weights):
+            yield x, y, computed_sample_weight
+
+    # Prepare the validation dataset.
+    val_dataset = Dataset.from_generator(
+        lambda x: gen(x[-num_items:], y[-num_items:]),
+        output_signature=output_signature,
+    ).batch(args.batch_size)
+
+    # Prepare the train dataset.
+    train_dataset = Dataset.from_generator(
+        lambda x: gen(x[:-num_items], y[:-num_items]),
+        output_signature=output_signature,
+    ).shuffle(args.trainset_shuffle_size).batch(args.batch_size)
     
     checkpoint_filepath = f'{CHECKPOINTS_FOLDER}/{MODEL_ID}/'
     print("Starting training")
@@ -171,7 +187,7 @@ def train(x, y, num_classes):
                             callbacks.ModelCheckpoint(
                                 filepath=checkpoint_filepath,
                                 monitor='val_loss',
-                                mode='max',
+                                mode='min',
                                 save_best_only=True
                             ),
                             callbacks.EarlyStopping(
