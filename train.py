@@ -168,13 +168,13 @@ def train(x, y, num_classes):
 
     # Prepare the validation dataset.
     val_dataset = Dataset.from_generator(
-        lambda x: gen(x[-num_items:], y[-num_items:]),
+        lambda: gen(x[-num_items:], y[-num_items:]),
         output_signature=output_signature,
     ).batch(args.batch_size)
 
     # Prepare the train dataset.
     train_dataset = Dataset.from_generator(
-        lambda x: gen(x[:-num_items], y[:-num_items]),
+        lambda: gen(x[:-num_items], y[:-num_items]),
         output_signature=output_signature,
     ).shuffle(args.trainset_shuffle_size).batch(args.batch_size)
     
