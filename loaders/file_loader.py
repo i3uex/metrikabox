@@ -3,7 +3,11 @@ import numpy as np
 from pydub import AudioSegment
 from utils import apply_window
 
+
 class FileLoader:
+    """
+    Class to load audio files
+    """
     def __init__(self, sample_rate:int, window:float, step:float):
         self.sr = sample_rate
         self.window = window

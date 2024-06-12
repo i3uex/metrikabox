@@ -1,7 +1,16 @@
 from predictor.audio_model import AudioModel
 
+
 class AudioSegmenter(AudioModel):
+    """
+    Class to segment audio classes
+    """
     def _format_output(self, y):
+        """
+        Format the output of the model
+        :param y: class predictions
+        :return:
+        """
         y = self.encoder.inverse_transform(y)
         list_detections = list()
         last_value = y[0]
@@ -14,6 +23,7 @@ class AudioSegmenter(AudioModel):
                 last_value = prediction
         list_detections.append({'value': last_value, 'from': last_from * step, 'to': len(y) * step})
         return list_detections
+
 
 if __name__ == '__main__':
     import sys

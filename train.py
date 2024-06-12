@@ -23,7 +23,7 @@ from augmentations.audio import WhiteNoiseAugmentation
 AVAILABLE_KERAS_MODELS = {model_name: model for model_name, model in getmembers(importlib.import_module('tensorflow.keras.applications'), isfunction)}
 AVAILABLE_KERAS_OPTIMIZERS = {optimizer_name: optimizer for optimizer_name, optimizer in getmembers(importlib.import_module('tensorflow.keras.optimizers'), isclass)}
 AVAILABLE_CLASS_LOADERS = {class_loader_name: class_loader for class_loader_name, class_loader in getmembers(importlib.import_module('loaders.class_loader'), isclass)}
-parser = argparse.ArgumentParser(prog = 'AudioTrain', description = 'Trains')
+parser = argparse.ArgumentParser(prog='AudioTrain', description='Trains')
 parser.add_argument('folder')
 parser.add_argument('--model_id', default=int(time.time()))
 parser.add_argument('-sr', '--sample_rate', default=DEFAULT_SAMPLE_RATE, type=int, help='Sample rate the audio will be converted to')
@@ -72,6 +72,10 @@ with open(f'{MODEL_ID_CONFIG_FOLDER}/model-config.json', "w") as f:
 
 
 def load_data():
+    """
+    Loads the data to train the model
+    :return: loaded data in a tuple (x, y, num_classes)
+    """
     class_loader = ClassLoaderFromSameFileName()
     if args.class_loader:
         class_loader = AVAILABLE_CLASS_LOADERS[args.class_loader]()
@@ -95,6 +99,11 @@ def load_data():
 
 
 def plot_history(history):
+    """
+    Plots the history of the model training
+    :param history: History object from keras
+    :return:
+    """
     plt.plot(history.history['accuracy'])
     plt.plot(history.history['val_accuracy'])
     plt.title('model accuracy')
@@ -113,6 +122,13 @@ def plot_history(history):
 
 
 def train(x, y, num_classes):
+    """
+    Trains the model
+    :param x:
+    :param y:
+    :param num_classes:
+    :return:
+    """
     predefined_model = None
     if args.model:
         predefined_model = AVAILABLE_KERAS_MODELS[args.model](
