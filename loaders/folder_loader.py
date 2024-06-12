@@ -1,6 +1,8 @@
 import glob
 import os
 import pickle
+import random
+import sys
 from concurrent.futures import ProcessPoolExecutor
 import multiprocessing
 from typing import Tuple
@@ -71,7 +73,7 @@ class FolderLoader:
             print(e)
             out_shape = [0, self.sr * self.window]
         num_processes = multiprocessing.cpu_count() // 8 if self.use_mmap else multiprocessing.cpu_count()
-        with ProcessPoolExecutor(max_workers=num_processes, mp_context=multiprocessing.get_context("fork")) as ex:
+        with ProcessPoolExecutor(max_workers=num_processes) as ex:
             futures = [ex.submit(self.file_loader.load, audio_file) for audio_file in items]
             with tqdm(total=len(futures), desc='Loading files') as pbar:
                 # Process loaded audios
@@ -97,14 +99,11 @@ class FolderLoader:
                         self.X.extend(x)
                     self.Y.extend(y)
                     pbar.update()
-        print("Shuffleling dataset") 
-        seed = 42
-        rstate = np.random.RandomState(seed)
-        rstate.shuffle(self.Y)
+        print("Shuffling dataset")
+        seed = random.randrange(sys.maxsize)
+        random.Random(seed).shuffle(self.Y)
         if not self.use_mmap:
-            self.X = np.array(self.X)
-            rstate = np.random.RandomState(seed)
-            rstate.shuffle(self.X)
+            random.Random(seed).shuffle(self.X)
         else:
             with open(self.MMAP_SHAPE_FILE, 'wb') as f:
                 pickle.dump(out_shape, f)
