@@ -82,6 +82,7 @@ class FolderLoader:
                         x = future.result()
                     except Exception as e:
                         print(f'Exception {type(e)} in file {items[i]}. Skipping')
+                        continue
                     y = self.class_loader.get_class(af, x.shape[0])
                     x, y = list(zip(*filter(lambda _item: _item[1] not in classes2avoid, zip(x, y))))
                     if self.use_mmap:
