@@ -59,7 +59,7 @@ class AudioModelBuilder:
         self.stft_nmels = stft_nmels
         self.file_loader = FileLoader(sample_rate=self.sample_rate, window=self.window, step=self.step)
 
-    def get_classification_model(self, num_classes:int, predefined_model:Model=DEFAULT_PREDEFINED_MODEL) -> Model:
+    def get_classification_model(self, num_classes: int, input_shape: tuple, predefined_model: Model = DEFAULT_PREDEFINED_MODEL) -> Model:
         """
         Get a classification model
         :param input_shape: Tuple of ints with the input shape
@@ -67,7 +67,7 @@ class AudioModelBuilder:
         :param predefined_model: Model to use as base for the classification model
         :return: Classification model
         """
-        input_tensor = layers.Input(shape=(get_mels_from_hop_and_win_lengths(self.stft_hop, self.stft_window, input_size=int(self.sample_rate*self.window)), self.stft_nmels, 1))
+        input_tensor = layers.Input(shape=input_shape[1:])
         convolution_layer = layers.Conv2D(3, (3, 3), padding='same')(input_tensor)  # X has a dimension of (IMG_SIZE,N_MELS,3)
         base_model = predefined_model
         for layer in base_model.layers:
@@ -112,10 +112,16 @@ class AudioModelBuilder:
         model = Sequential()
         for augment in audio_augmentations:
             model.add(augment)
-        model.add(self.get_melspectrogram())
+        melspectrogram_layer = self.get_melspectrogram()
+        model.add(melspectrogram_layer)
         for augment in spectrum_augmentations:
             model.add(augment)
-        model.add(self.get_classification_model(num_classes, predefined_model=predefined_model))
+        model.add(
+            self.get_classification_model(num_classes,
+                                          input_shape=melspectrogram_layer.output_shape,
+                                          predefined_model=predefined_model
+                                          )
+        )
         return model
 
     def load_file(self, audio_file: Union[str, np.array, AudioSegment]) -> np.ndarray:
