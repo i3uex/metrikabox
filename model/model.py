@@ -1,6 +1,7 @@
 from typing import List, Union
 
 from pydub import AudioSegment
+import tensorflow as tf
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras import layers
 from kapre.composed import get_melspectrogram_layer
@@ -28,9 +29,8 @@ class NormLayer(layers.Layer):
 
     def call(self, x, **kwargs):
         if x.dtype.is_integer:
-            scale = 1.0 / float(1 << ((8 * x.dtype.size) - 1))
             # Rescale and format the data buffer
-            return scale * x
+            return tf.cast(x, dtype=tf.float32) / float(1 << ((8 * x.dtype.size) - 1))
         return x
 
 

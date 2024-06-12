@@ -156,7 +156,7 @@ def train(x, y, num_classes):
     print("Preparing datasets")
 
     output_signature = (
-        tf.TensorSpec(shape=(int(args.sample_rate*args.window), 1), dtype=tf.float32),
+        tf.TensorSpec(shape=(int(args.sample_rate*args.window), 1), dtype=tf.int16),
         tf.TensorSpec(shape=(num_classes), dtype=tf.int64),
         tf.TensorSpec(shape=(), dtype=tf.float64)
     )
