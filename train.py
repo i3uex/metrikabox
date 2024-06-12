@@ -137,9 +137,10 @@ def train(x, y, num_classes):
             pooling='avg', 
             weights=None
         )
-    model = AudioModelBuilder(**model_config).get_model(num_classes,
-                                                        predefined_model=predefined_model,
-                                                        )
+    model = AudioModelBuilder(**model_config).get_model(
+        num_classes,
+        predefined_model=predefined_model,
+    )
     optimizer = Adam
     if args.optimizer:
         optimizer = AVAILABLE_KERAS_OPTIMIZERS[args.optimizer]

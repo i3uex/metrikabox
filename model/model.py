@@ -118,7 +118,7 @@ class AudioModelBuilder:
         model.add(self.get_classification_model(num_classes, predefined_model=predefined_model))
         return model
 
-    def load_file(self, audio_file:Union[str, np.array, AudioSegment]) -> np.ndarray:
+    def load_file(self, audio_file: Union[str, np.array, AudioSegment]) -> np.ndarray:
         return self.file_loader.load(audio_file)
 
 
