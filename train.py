@@ -156,9 +156,9 @@ def train(x, y, num_classes):
     print("Preparing datasets")
 
     output_signature = (
-        tf.TensorSpec(shape=(int(args.sample_rate*args.window), 1), dtype=tf.int16),
-        tf.TensorSpec(shape=(num_classes), dtype=tf.int32),
-        tf.RaggedTensorSpec(shape=(), dtype=tf.float32)
+        tf.TensorSpec(shape=(int(args.sample_rate*args.window), 1), dtype=tf.float32),
+        tf.TensorSpec(shape=(num_classes), dtype=tf.int64),
+        tf.TensorSpec(shape=(), dtype=tf.float64)
     )
 
     def gen(X, Y):
@@ -180,7 +180,7 @@ def train(x, y, num_classes):
     
     checkpoint_filepath = f'{CHECKPOINTS_FOLDER}/{MODEL_ID}/'
     print("Starting training")
-    print(model.summary())
+    
     history = model.fit(train_dataset,
                         validation_data=val_dataset,
                         epochs=args.epochs,
