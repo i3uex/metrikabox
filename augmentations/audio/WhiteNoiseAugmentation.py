@@ -3,12 +3,28 @@ from augmentations.AugmentationLayer import AudioAugmentationLayer
 
 
 class WhiteNoiseAugmentation(AudioAugmentationLayer):
+    """
+    Layer to apply white noise augmentation over the audio
+    """
     def __init__(self, max_snr=15, min_snr=30, **kwargs):
+        """
+        Layer to apply white noise augmentation over the audio
+        :param max_snr: maximum signal to noise ratio
+        :param min_snr: minimum signal to noise ratio
+        :param kwargs: other arguments
+        """
         super(WhiteNoiseAugmentation, self).__init__(**kwargs)
         self.max_snr = max_snr
         self.min_snr = min_snr
 
     def call(self, sounds, training=None, **kwargs):
+        """
+        Apply white noise augmentation over the audio
+        :param sounds: tensor with the audio to augment
+        :param training: whether the model is training
+        :param kwargs: other arguments
+        :return:
+        """
         if not training:
             return sounds
         snr = tf.random.uniform((tf.shape(sounds)[0], 1), self.min_snr, self.max_snr)
@@ -18,6 +34,10 @@ class WhiteNoiseAugmentation(AudioAugmentationLayer):
         return sounds + noise
 
     def get_config(self):
+        """
+        Get the configuration of the layer
+        :return: configuration of the layer
+        """
         config = super(WhiteNoiseAugmentation, self).get_config()
         config.update(
             {
@@ -26,6 +46,7 @@ class WhiteNoiseAugmentation(AudioAugmentationLayer):
             }
         )
         return config
+
 
 if __name__ == '__main__':
     import librosa

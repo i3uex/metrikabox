@@ -3,18 +3,26 @@ import os
 
 
 class ClassLoader:
+    """
+    Base class to load the classes of an audio file
+    """
     def get_class(self, audio_file:str, num_items:int) -> list:
         return ['']*num_items
 
 
 class ClassLoaderFromFolderName(ClassLoader):
+    """
+    Class to load the classes of an audio file from the folder name
+    """
     def get_class(self, audio_file:str, num_items:int) -> list:
         base_path, class_name, file_name = audio_file.rsplit('/', 2)
         return [class_name]*num_items
 
 
 class ClassLoaderFromDict(ClassLoader):
-
+    """
+    Class to load the classes of an audio file from a given dictionary
+    """
     def __init__(self, classes_dict):
         self.classes_dict = classes_dict
 
@@ -24,6 +32,9 @@ class ClassLoaderFromDict(ClassLoader):
 
 
 class ClassLoaderFromSameFileName(ClassLoader):
+    """
+    Class to load the classes of an audio file from the same file name in JSON extension
+    """
     def get_class(self, audio_file:str, num_items:int) -> list:
         json_file = audio_file.replace(".mp3", ".json")
         if not os.path.exists(json_file):

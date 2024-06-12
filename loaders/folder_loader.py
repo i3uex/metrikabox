@@ -1,6 +1,8 @@
 import glob
 import os
 import pickle
+import random
+import sys
 from concurrent.futures import ProcessPoolExecutor
 import multiprocessing
 from typing import Tuple
@@ -14,6 +16,7 @@ from loaders.file_loader import FileLoader
 
 BASE_PATH = ''
 
+
 class FolderLoader:
     def __init__(self,
                  sample_rate:int=DEFAULT_SAMPLE_RATE,
@@ -23,6 +26,15 @@ class FolderLoader:
                  class_loader:ClassLoader=ClassLoader(),
                  out_folder:str=BASE_PATH
                  ):
+        """
+        Class to load audio files from a folder
+        :param sample_rate: Desired sample rate
+        :param window: Length of the window in seconds
+        :param step: Length of the step in seconds
+        :param use_mmap: Use memory map to store the data
+        :param class_loader: Class loader to use
+        :param out_folder: Folder to store the mmap and classes
+        """
         self.Y = []
         self.X = []
         self.sr = sample_rate
@@ -36,6 +48,14 @@ class FolderLoader:
         self.MMAP_SHAPE_FILE = f'{out_folder}MMAP_shape.pkl'
 
     def load(self, folder:str, max_files:int=None, classes2avoid=(), audio_formats=(".wav", ".mp3")) -> Tuple[np.ndarray, list]:
+        """
+        Load audio files from a folder
+        :param folder: Folder containing the audio files
+        :param max_files: Maximum number of files to load
+        :param classes2avoid: Audio classes to avoid from training
+        :param audio_formats: Desired audio formats
+        :return: Array with the audio data and a list with the classes
+        """
         items = list(filter(lambda x: not os.path.isdir(x) and (any([x.lower().endswith(f) for f in audio_formats]) if audio_formats else True), glob.glob(folder + '**', recursive=True)))
         if max_files:
             items = items[:max_files]
@@ -53,7 +73,7 @@ class FolderLoader:
             print(e)
             out_shape = [0, self.sr * self.window]
         num_processes = multiprocessing.cpu_count() // 8 if self.use_mmap else multiprocessing.cpu_count()
-        with ProcessPoolExecutor(max_workers=num_processes, mp_context=multiprocessing.get_context("fork")) as ex:
+        with ProcessPoolExecutor(max_workers=num_processes) as ex:
             futures = [ex.submit(self.file_loader.load, audio_file) for audio_file in items]
             with tqdm(total=len(futures), desc='Loading files') as pbar:
                 # Process loaded audios
@@ -62,6 +82,7 @@ class FolderLoader:
                         x = future.result()
                     except Exception as e:
                         print(f'Exception {type(e)} in file {items[i]}. Skipping')
+                        continue
                     y = self.class_loader.get_class(af, x.shape[0])
                     x, y = list(zip(*filter(lambda _item: _item[1] not in classes2avoid, zip(x, y))))
                     if self.use_mmap:
@@ -79,14 +100,11 @@ class FolderLoader:
                         self.X.extend(x)
                     self.Y.extend(y)
                     pbar.update()
-        print("Shuffleling dataset") 
-        seed = 42
-        rstate = np.random.RandomState(seed)
-        rstate.shuffle(self.Y)
+        print("Shuffling dataset")
+        seed = random.randrange(sys.maxsize)
+        random.Random(seed).shuffle(self.Y)
         if not self.use_mmap:
-            self.X = np.array(self.X)
-            rstate = np.random.RandomState(seed)
-            rstate.shuffle(self.X)
+            random.Random(seed).shuffle(self.X)
         else:
             with open(self.MMAP_SHAPE_FILE, 'wb') as f:
                 pickle.dump(out_shape, f)
