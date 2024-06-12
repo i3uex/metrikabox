@@ -24,6 +24,16 @@ DEFAULT_N_MELS = 128
 DEFAULT_PREDEFINED_MODEL = MNIST_convnet()
 
 
+class NormLayer(layers.Layer):
+
+    def call(self, x, **kwargs):
+        if x.dtype.is_integer:
+            scale = 1.0 / float(1 << ((8 * x.dtype.size) - 1))
+            # Rescale and format the data buffer
+            return scale * x
+        return x
+
+
 class AudioModelBuilder:
     def __init__(self,
                  sample_rate:int=DEFAULT_SAMPLE_RATE,
@@ -77,6 +87,7 @@ class AudioModelBuilder:
         if not predefined_model:
             predefined_model = DEFAULT_PREDEFINED_MODEL
         model = Sequential()
+        model.add(NormLayer())
         for augment in audio_augmentations:
             model.add(augment)
         model.add(self.get_melspectrogram())

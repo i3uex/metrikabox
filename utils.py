@@ -36,9 +36,9 @@ def apply_window(audio: Union[str, np.array, AudioSegment],
                  pad_mode="symmetric",
                  ) -> np.ndarray:
     if type(audio) is str:
-        audio = AudioSegment.from_file(audio).set_frame_rate(sr).set_channels(1)
+        audio = AudioSegment.from_file(audio)
     if type(audio) is AudioSegment:
-        audio = buf_to_float(audio.get_array_of_samples(), n_bytes=audio.sample_width)
+        audio = audio.set_frame_rate(sr).set_channels(1).set_sample_width(2).get_array_of_samples()
     return np.expand_dims(
         __window(np.pad(audio, math.ceil(sr / 2 * window), mode=pad_mode), window_seconds=window, step_seconds=step, sr=sr), 2)
 
