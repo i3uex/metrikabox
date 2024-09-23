@@ -1,7 +1,6 @@
 import math
 from typing import Union
 from pydub import AudioSegment
-from librosa.util import buf_to_float
 import numpy as np
 from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
 
@@ -24,8 +23,12 @@ class Singleton(type):
             pass
 
 
-def __window(x: np.array, window_seconds=DEFAULT_WINDOW, step_seconds=DEFAULT_STEP,
-             sr=DEFAULT_SAMPLE_RATE) -> np.ndarray:
+def __window(
+        x: np.array,
+        window_seconds: float = DEFAULT_WINDOW,
+        step_seconds: float = DEFAULT_STEP,
+        sr: int = DEFAULT_SAMPLE_RATE
+        ) -> np.ndarray:
     """
     Apply a window to the audio
     :param x: Audio in np array format
@@ -41,7 +44,15 @@ def __window(x: np.array, window_seconds=DEFAULT_WINDOW, step_seconds=DEFAULT_ST
     return np.lib.stride_tricks.as_strided(x, strides=strides, shape=shape, writeable=False)[0::step_frames]
 
 
-def apply_window(audio: Union[str, np.array, AudioSegment],
+def load_audio(audio: Union[str, np.array, AudioSegment], sr=16000):
+    if type(audio) is str:
+        audio = AudioSegment.from_file(audio)
+    if type(audio) is AudioSegment:
+        audio = audio.set_channels(1).set_frame_rate(sr).set_sample_width(2).get_array_of_samples()
+    return audio
+
+
+def apply_window(audio: np.array,
                  window: float = DEFAULT_WINDOW,
                  step: float = DEFAULT_STEP,
                  sr: int = DEFAULT_SAMPLE_RATE,
@@ -57,21 +68,4 @@ def apply_window(audio: Union[str, np.array, AudioSegment],
     :param dtype: desired output type. Default is int16
     :return: windowed audio
     """
-    if type(audio) is str:
-        audio = AudioSegment.from_file(audio)
-    if type(audio) is AudioSegment:
-        audio = audio.set_frame_rate(sr).set_channels(1).set_sample_width(2).get_array_of_samples()
-    return np.expand_dims(
-        __window(np.pad(audio, math.ceil(sr / 2 * window), mode=pad_mode), window_seconds=window, step_seconds=step, sr=sr), 2)
-
-
-def get_mels_from_hop_and_win_lengths(hop_length: int, win_length,
-                                      input_size=DEFAULT_SAMPLE_RATE * DEFAULT_WINDOW) -> int:
-    """
-    Get the number of mels from the hop and win lengths
-    :param hop_length: hop length
-    :param win_length: window length
-    :param input_size: input size
-    :return:
-    """
-    return int(math.floor((input_size - win_length) / hop_length) + 1)
+    return __window(np.pad(audio, pad_width=math.ceil(sr / 2 * window), mode=pad_mode), window_seconds=window, step_seconds=step, sr=sr)

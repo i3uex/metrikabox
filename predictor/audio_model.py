@@ -30,16 +30,23 @@ class AudioModel(metaclass=Singleton):
         with open(f'{MODEL_CONFIG_FOLDER}/{model_id}/model-config.json') as f:
             self.model_config = json.load(f)
 
+    def predict_without_format(self, audio):
+        """
+        Predict the audio
+        :param audio: Audio to predict
+        :return: Prediction
+        """
+        return self.model.predict(FileLoader(self.model_config['sample_rate'], self.model_config['window'], self.model_config['step']).load(audio), batch_size=BATCH_SIZE)
+
     def predict(self, audio):
         """
         Predict the audio
         :param audio: Audio to predict
         :return: Prediction
         """
-        y = self.model.predict(FileLoader(self.model_config['sample_rate'], self.model_config['window'], self.model_config['step']).load(audio), batch_size=BATCH_SIZE)
-        return self._format_output(y)
+        return self.format_output(self.predict_without_format(audio))
 
-    def _format_output(self, y):
+    def format_output(self, y):
         """
         Format the output
         :param y: Output

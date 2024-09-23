@@ -5,7 +5,7 @@ class AudioSegmenter(AudioModel):
     """
     Class to segment audio classes
     """
-    def _format_output(self, y):
+    def format_output(self, y):
         """
         Format the output of the model
         :param y: class predictions

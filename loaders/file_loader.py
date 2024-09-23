@@ -1,7 +1,7 @@
 from typing import Union
 import numpy as np
 from pydub import AudioSegment
-from utils import apply_window
+from utils import apply_window, load_audio
 
 
 class FileLoader:
@@ -14,5 +14,5 @@ class FileLoader:
         self.step = step
 
     def load(self, audio: Union[str, np.array, AudioSegment]) -> np.ndarray:
-        return apply_window(audio, window=self.window, step=self.step, sr=self.sr)
+        return apply_window(load_audio(audio, sr=self.sr), window=self.window, step=self.step, sr=self.sr)
 

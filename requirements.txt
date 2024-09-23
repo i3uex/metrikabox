@@ -2,8 +2,9 @@ kapre
 pydub
 librosa
 numpy
-sklearn
+scikit-learn
 matplotlib
 tensorflow>=2.4.0
 kito
 tqdm
+kapre

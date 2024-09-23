@@ -101,11 +101,14 @@ class FolderLoader:
                     self.Y.extend(y)
                     pbar.update()
         print("Shuffling dataset")
-        seed = random.randrange(sys.maxsize)
-        random.Random(seed).shuffle(self.Y)
+        seed = 42
         if not self.use_mmap:
-            random.Random(seed).shuffle(self.X)
+            list2shuffle = list(zip(self.X, self.Y))
+            random.Random(seed).shuffle(list2shuffle)
+            self.X, self.Y = zip(*list2shuffle)
         else:
+            rstate = np.random.RandomState(seed)
+            rstate.shuffle(self.Y)
             with open(self.MMAP_SHAPE_FILE, 'wb') as f:
                 pickle.dump(out_shape, f)
             X = np.memmap(self.MMAP_PATH, dtype=np.float32, mode='r+')

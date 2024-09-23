@@ -2,8 +2,8 @@ from typing import List, Union
 
 from pydub import AudioSegment
 import tensorflow as tf
-from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras import layers
+from keras.models import Sequential, Model
+from keras import layers
 from kapre.composed import get_melspectrogram_layer
 import numpy as np
 
@@ -11,11 +11,7 @@ from augmentations.AugmentationLayer import AudioAugmentationLayer, SpectrogramA
 from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
 from loaders import FileLoader
 from model.classification import MNIST_convnet
-from utils import get_mels_from_hop_and_win_lengths
 
-
-# Tested for 5 step and 10 win @ 16000 Hz
-DEFAULT_STFT_HOP = 1280
 # Tested for 1 step and 2 win @ 16000 Hz
 DEFAULT_STFT_HOP = 256
 DEFAULT_STFT_N_FFT = DEFAULT_STFT_HOP*4
@@ -27,10 +23,11 @@ DEFAULT_PREDEFINED_MODEL = MNIST_convnet()
 
 class NormLayer(layers.Layer):
 
-    def call(self, x, **kwargs):
+    def call(self, x, training=None, **kwargs):
         if x.dtype.is_integer:
+            scale = 1. / float(1 << ((8 * x.dtype.size) - 1))
             # Rescale and format the data buffer
-            return tf.cast(x, dtype=tf.float32) / float(1 << ((8 * x.dtype.size) - 1))
+            return tf.math.scalar_mul(scale, tf.cast(x, dtype=tf.float32))
         return x
 
 
@@ -99,7 +96,8 @@ class AudioModelBuilder:
             sample_rate=self.sample_rate,
             mel_f_min=self.mel_f_min,
             return_decibel=True,
-            input_data_format='channels_last', output_data_format='channels_last',
+            input_data_format='channels_last',
+            output_data_format='channels_last',
             input_shape=(int(self.sample_rate*self.window), 1)
         )
 
@@ -148,10 +146,14 @@ if __name__ == '__main__':
     builder = AudioModelBuilder(window=5, step=2.5)
     audio = builder.load_file(librosa.util.example('brahms'))
 
+    model = Sequential()
+    # Normalize int16 to float32
+    model.add(NormLayer())
     # Get melspectrogram layer from builder
     stft = builder.get_melspectrogram()
+    model.add(stft)
     # Predict melspectrogram of windowed items
-    melspectrograms = stft.predict(audio)
+    melspectrograms = model.predict(audio)
 
     plt.figure()
     width = round(math.sqrt(melspectrograms.shape[0]))
