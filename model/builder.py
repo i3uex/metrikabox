@@ -4,7 +4,6 @@ from pydub import AudioSegment
 import tensorflow as tf
 from keras.models import Sequential, Model
 from keras import layers
-from kapre.composed import get_melspectrogram_layer
 import numpy as np
 
 from augmentations.AugmentationLayer import AudioAugmentationLayer, SpectrogramAugmentationLayer
@@ -74,7 +73,7 @@ class AudioModelBuilder:
         :param predefined_model: Model to use as base for the classification model
         :return: Classification model
         """
-        input_tensor = layers.Input(shape=input_shape[1:])
+        input_tensor = layers.Input(shape=input_shape)
         convolution_layer = layers.Conv2D(3, (3, 3), padding='same')(input_tensor)  # X has a dimension of (IMG_SIZE,N_MELS,3)
         base_model = predefined_model
         for layer in base_model.layers:
@@ -88,18 +87,16 @@ class AudioModelBuilder:
         Get a melspectrogram layer
         :return: Layer to predict melspectrograms
         """
-        return get_melspectrogram_layer(
-            n_fft=self.stft_nfft,
-            win_length=self.stft_window,
-            hop_length=self.stft_hop,
-            n_mels=self.stft_nmels,
-            sample_rate=self.sample_rate,
-            mel_f_min=self.mel_f_min,
-            return_decibel=True,
-            input_data_format='channels_last',
-            output_data_format='channels_last',
-            input_shape=(int(self.sample_rate*self.window), 1)
+        return layers.MelSpectrogram(
+            fft_length=self.stft_nfft,
+            sequence_length=self.stft_window,
+            sequence_stride=self.stft_hop,
+            num_mel_bins=self.stft_nmels,
+            sampling_rate=self.sample_rate,
+            min_freq=self.mel_f_min,
+            power_to_db=True
         )
+
 
     def get_model(self,
                   num_classes: int,
@@ -123,11 +120,13 @@ class AudioModelBuilder:
             model.add(augment)
         melspectrogram_layer = self.get_melspectrogram()
         model.add(melspectrogram_layer)
+        input_shape = (*melspectrogram_layer.compute_output_shape((int(self.sample_rate * self.window),)), 1)
+        model.add(layers.Reshape(input_shape))
         for augment in spectrum_augmentations:
             model.add(augment)
         model.add(
             self.get_classification_model(num_classes,
-                                          input_shape=melspectrogram_layer.output_shape,
+                                          input_shape=input_shape,
                                           predefined_model=predefined_model
                                           )
         )

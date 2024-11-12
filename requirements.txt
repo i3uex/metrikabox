@@ -1,10 +1,9 @@
-kapre
 pydub
 librosa
 numpy
 scikit-learn
 matplotlib
-tensorflow>=2.4.0
+keras>=3.1
+tensorflow
 kito
 tqdm
-kapre

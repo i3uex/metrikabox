@@ -182,7 +182,7 @@ def train(x, y, num_classes):
         output_signature=output_signature,
     ).batch(args.batch_size)
 
-    checkpoint_filepath = f'{CHECKPOINTS_FOLDER}/{MODEL_ID}/'
+    checkpoint_filepath = f'{CHECKPOINTS_FOLDER}/{MODEL_ID}.keras'
     print("Starting training")
     
     history = model.fit(train_dataset,
