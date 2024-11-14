@@ -172,19 +172,21 @@ def train(x, y, num_classes):
         tf.TensorSpec(shape=(), dtype=tf.float64)
     )
 
-    def gen(_X, _Y):
-        for _x, _y, computed_sample_weight in zip(_X, _Y, class_weight.compute_sample_weight('balanced', _Y)):
-            yield _x, _y, computed_sample_weight
+    def generate(_X, _Y):
+        def _gen():
+            for _item in zip(_X, _Y, class_weight.compute_sample_weight('balanced', _Y)):
+                yield _item
+        return _gen
 
     # Prepare the train dataset.
     train_dataset = tf.data.Dataset.from_generator(
-        lambda: gen(x[:train_num_items], y[:train_num_items]),
+        generate(x[:train_num_items], y[:train_num_items]),
         output_signature=output_signature,
     ).shuffle(train_num_items//10).batch(args.batch_size)
 
     # Prepare the validation dataset.
     val_dataset = tf.data.Dataset.from_generator(
-        lambda: gen(x[train_num_items:], y[train_num_items:]),
+        generate(x[train_num_items:], y[train_num_items:]),
         output_signature=output_signature,
     ).batch(args.batch_size)
 
