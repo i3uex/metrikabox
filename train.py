@@ -83,7 +83,7 @@ def load_data():
     Loads the data to train the model
     :return: loaded data in a tuple (x, y, num_classes)
     """
-    class_loader = ClassLoaderFromSameFileName()
+    class_loader = ClassLoaderFromFolderName()
     if args.class_loader:
         class_loader = AVAILABLE_CLASS_LOADERS[args.class_loader]()
     data_loader = FolderLoader(
