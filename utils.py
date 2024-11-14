@@ -56,7 +56,7 @@ def apply_window(audio: np.array,
                  window: float = DEFAULT_WINDOW,
                  step: float = DEFAULT_STEP,
                  sr: int = DEFAULT_SAMPLE_RATE,
-                 pad_mode="symmetric"
+                 pad_mode="constant"
                  ) -> np.ndarray:
     """
     Apply a window to the audio
@@ -68,4 +68,6 @@ def apply_window(audio: np.array,
     :param dtype: desired output type. Default is int16
     :return: windowed audio
     """
-    return __window(np.pad(audio, pad_width=math.ceil(sr / 2 * window), mode=pad_mode), window_seconds=window, step_seconds=step, sr=sr)
+    spare_items = len(audio) % int(sr * step)
+    pad_width = (int(sr * step) - spare_items) if spare_items > 0 else 0
+    return __window(np.pad(audio, pad_width=(0, pad_width), mode=pad_mode), window_seconds=window, step_seconds=step, sr=sr)
