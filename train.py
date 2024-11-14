@@ -217,7 +217,9 @@ def train(x, y, num_classes):
                         ]
     )
     plot_history(history)
-    model.save("weights.h5")
+    os.makedirs('histories', exist_ok=True)
+    with open(f'histories/{MODEL_ID}.json', "w") as f:
+        json.dump(history.history, f, default=str)
 
 
 if __name__ == '__main__':
