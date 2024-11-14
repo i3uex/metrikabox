@@ -15,11 +15,9 @@ from keras import callbacks
 from keras.optimizers import Adam
 from keras.metrics import Precision, Recall, CategoricalAccuracy, BinaryAccuracy
 
-from augmentations.spectrogram import SpecAugmentLayer
-from loaders import FolderLoader, ClassLoaderFromSameFileName
+from loaders import FolderLoader, ClassLoaderFromFolderName
 from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS, CHECKPOINTS_FOLDER, MODEL_CONFIG_FOLDER
 from model.builder import AudioModelBuilder, DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, DEFAULT_MEL_F_MIN
-from augmentations.audio import WhiteNoiseAugmentation
 
 AVAILABLE_KERAS_MODELS = {model_name: model for model_name, model in getmembers(importlib.import_module('tensorflow.keras.applications'), isfunction)}
 AVAILABLE_KERAS_OPTIMIZERS = {optimizer_name: optimizer for optimizer_name, optimizer in getmembers(importlib.import_module('tensorflow.keras.optimizers'), isclass)}
