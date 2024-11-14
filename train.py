@@ -43,6 +43,8 @@ parser.add_argument('--optimizer', default=None, choices=AVAILABLE_KERAS_OPTIMIZ
 parser.add_argument('--class_loader', default=None, choices=AVAILABLE_CLASS_LOADERS.keys(), help='Any of the available class loaders')
 parser.add_argument('--learning_rate', default=0.001, type=float)
 parser.add_argument('--trainset_shuffle_size', default=1024, type=int)
+parser.add_argument('--classes2avoid', default=[], nargs='+')
+
 args = parser.parse_args()
 
 if not args.folder.endswith("/"):
@@ -90,7 +92,7 @@ def load_data():
         out_folder=args.folder,
         use_mmap=args.use_mmap
     )
-    x, y = data_loader.load(args.folder, classes2avoid=["commercial"])
+    x, y = data_loader.load(args.folder, classes2avoid=args.classes2avoid)
     assert len(y) == len(x)
     print(Counter(y))
     encoder = LabelBinarizer()

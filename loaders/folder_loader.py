@@ -84,7 +84,10 @@ class FolderLoader:
                         print(f'Exception {type(e)} in file {items[i]}. Skipping')
                         continue
                     y = self.class_loader.get_class(af, x.shape[0])
-                    x, y = list(zip(*filter(lambda _item: _item[1] not in classes2avoid, zip(x, y))))
+                    filtered_data = list(filter(lambda _item: _item[1] not in classes2avoid, zip(x, y)))
+                    x, y = ([], [])
+                    if filtered_data:
+                        x, y = list(zip(*filtered_data))
                     if self.use_mmap:
                         x = np.array(x)
                         try:
