@@ -24,6 +24,8 @@ from augmentations.audio import WhiteNoiseAugmentation
 AVAILABLE_KERAS_MODELS = {model_name: model for model_name, model in getmembers(importlib.import_module('tensorflow.keras.applications'), isfunction)}
 AVAILABLE_KERAS_OPTIMIZERS = {optimizer_name: optimizer for optimizer_name, optimizer in getmembers(importlib.import_module('tensorflow.keras.optimizers'), isclass)}
 AVAILABLE_CLASS_LOADERS = {class_loader_name: class_loader for class_loader_name, class_loader in getmembers(importlib.import_module('loaders.class_loader'), isclass)}
+AVAILABLE_AUDIO_AUGMENTATIONS = {class_loader_name: class_loader for class_loader_name, class_loader in getmembers(importlib.import_module('augmentations.audio'), isclass)}
+AVAILABLE_SPECTROGRAM_AUGMENTATIONS = {class_loader_name: class_loader for class_loader_name, class_loader in getmembers(importlib.import_module('augmentations.spectrogram'), isclass)}
 parser = argparse.ArgumentParser(prog='AudioTrain', description='Trains')
 parser.add_argument('folder')
 parser.add_argument('--model_id', default=None)
@@ -43,6 +45,8 @@ parser.add_argument('--optimizer', default=None, choices=AVAILABLE_KERAS_OPTIMIZ
 parser.add_argument('--class_loader', default=None, choices=AVAILABLE_CLASS_LOADERS.keys(), help='Any of the available class loaders')
 parser.add_argument('--learning_rate', default=0.001, type=float)
 parser.add_argument('--trainset_shuffle_size', default=1024, type=int)
+parser.add_argument('--audio_augmentations', default=[], nargs='+', choices=AVAILABLE_AUDIO_AUGMENTATIONS.keys())
+parser.add_argument('--spectrogram_augmentations', default=[], nargs='+', choices=AVAILABLE_SPECTROGRAM_AUGMENTATIONS.keys())
 parser.add_argument('--classes2avoid', default=[], nargs='+')
 
 args = parser.parse_args()
@@ -144,8 +148,8 @@ def train(x, y, num_classes):
         )
     model = AudioModelBuilder(**model_config).get_model(
         num_classes,
-        audio_augmentations=[WhiteNoiseAugmentation()],
-        spectrum_augmentations=[SpecAugmentLayer(5, 10)],
+        audio_augmentations=[AVAILABLE_AUDIO_AUGMENTATIONS[audio_augmentation]() for audio_augmentation in args.audio_augmentations],
+        spectrum_augmentations=[AVAILABLE_SPECTROGRAM_AUGMENTATIONS[spectrogram_augmentation]() for spectrogram_augmentation in args.spectrogram_augmentations],
         predefined_model=predefined_model,
     )
     optimizer = Adam
