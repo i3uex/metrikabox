@@ -1,29 +1,16 @@
 import os
 import json
-import time
-import pickle
 import argparse
-import importlib
 from collections import Counter
-from inspect import getmembers, isfunction, isclass
 
 from matplotlib import pyplot as plt
-from sklearn.utils import class_weight
-from sklearn.preprocessing import LabelBinarizer
-import tensorflow as tf
-from keras import callbacks
-from keras.optimizers import Adam
-from keras.metrics import Precision, Recall, CategoricalAccuracy, BinaryAccuracy
 
+from classes import Trainer
 from loaders import FolderLoader, ClassLoaderFromFolderName
-from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS, CHECKPOINTS_FOLDER, MODEL_CONFIG_FOLDER
-from model.builder import AudioModelBuilder, DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, DEFAULT_MEL_F_MIN
+from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS, CHECKPOINTS_FOLDER
+from model.builder import DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, DEFAULT_MEL_F_MIN
+from constants import *
 
-AVAILABLE_KERAS_MODELS = {model_name: model for model_name, model in getmembers(importlib.import_module('tensorflow.keras.applications'), isfunction)}
-AVAILABLE_KERAS_OPTIMIZERS = {optimizer_name: optimizer for optimizer_name, optimizer in getmembers(importlib.import_module('tensorflow.keras.optimizers'), isclass)}
-AVAILABLE_CLASS_LOADERS = {class_loader_name: class_loader for class_loader_name, class_loader in getmembers(importlib.import_module('loaders.class_loader'), isclass)}
-AVAILABLE_AUDIO_AUGMENTATIONS = {class_loader_name: class_loader for class_loader_name, class_loader in getmembers(importlib.import_module('augmentations.audio'), isclass)}
-AVAILABLE_SPECTROGRAM_AUGMENTATIONS = {class_loader_name: class_loader for class_loader_name, class_loader in getmembers(importlib.import_module('augmentations.spectrogram'), isclass)}
 parser = argparse.ArgumentParser(prog='AudioTrain', description='Trains')
 parser.add_argument('folder', help='Folder with the dataset to be used')
 parser.add_argument('--model_id', default=None, help='Model id to be used')
@@ -52,30 +39,7 @@ args = parser.parse_args()
 if not args.folder.endswith("/"):
     args.folder += "/"
 
-if not os.path.exists(MODEL_CONFIG_FOLDER):
-    os.mkdir(MODEL_CONFIG_FOLDER)
-
 MODEL_ID = args.model_id
-if not MODEL_ID:
-    MODEL_ID = f"{int(time.time())}_{args.sample_rate}Hz_{args.window}w_{args.step}s"
-MODEL_ID_CONFIG_FOLDER = f'{MODEL_CONFIG_FOLDER}/{MODEL_ID}'
-if not os.path.exists(MODEL_ID_CONFIG_FOLDER):
-    os.mkdir(MODEL_ID_CONFIG_FOLDER)
-
-
-model_config = {
-    "sample_rate": args.sample_rate,
-    "window": args.window,
-    "step": args.step,
-    "stft_nfft": args.stft_nfft,
-    "stft_window": args.stft_win,
-    "stft_hop": args.stft_hop,
-    "stft_nmels": args.stft_nmels,
-    "mel_f_min": args.mel_f_min
-}
-
-with open(f'{MODEL_ID_CONFIG_FOLDER}/model-config.json', "w") as f:
-    json.dump(model_config, f)
 
 
 def load_data():
@@ -97,12 +61,7 @@ def load_data():
     x, y = data_loader.load(args.folder, classes2avoid=args.classes2avoid)
     assert len(y) == len(x)
     print(Counter(y))
-    encoder = LabelBinarizer()
-    y = encoder.fit_transform(y)
-    num_classes = len(encoder.classes_)
-    with open(f'{MODEL_ID_CONFIG_FOLDER}/LabelEncoder.pkl', "wb") as f:
-        pickle.dump(encoder, f)
-    return x, y, num_classes
+    return x, y
 
 
 def plot_history(history):
@@ -111,25 +70,24 @@ def plot_history(history):
     :param history: History object from keras
     :return:
     """
-    plt.plot(history.history['accuracy'])
-    plt.plot(history.history['val_accuracy'])
-    plt.title('model accuracy')
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'val'], loc='upper left')
-    plt.savefig(f"{str(MODEL_ID)}_acc.png")
-    plt.show()
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title('model loss')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'val'], loc='upper left')
-    plt.savefig(f"{str(MODEL_ID)}_loss.png")
+    fig, (ax, bx) = plt.subplots(2, 1)
+    ax.plot(history.history['binary_accuracy'] if 'binary_accuracy' in history.history else history.history['categorical_accuracy'])
+    ax.plot(history.history['val_binary_accuracy'] if 'val_binary_accuracy' in history.history else history.history['val_categorical_accuracy'])
+    ax.set_title('model accuracy')
+    ax.set_ylabel('accuracy')
+    ax.set_xlabel('epoch')
+    ax.legend(['train', 'val'], loc='upper left')
+    bx.plot(history.history['loss'])
+    bx.plot(history.history['val_loss'])
+    bx.set_title('model loss')
+    bx.set_ylabel('loss')
+    bx.set_xlabel('epoch')
+    bx.legend(['train', 'val'], loc='upper left')
+    #plt.savefig(f"{str(MODEL_ID)}_loss.png")
     plt.show()
 
 
-def train(x, y, num_classes):
+def train(x, y):
     """
     Trains the model
     :param x: Audio data
@@ -137,84 +95,27 @@ def train(x, y, num_classes):
     :param num_classes: Number of classes
     :return:
     """
-    predefined_model = None
-    if args.model:
-        predefined_model = AVAILABLE_KERAS_MODELS[args.model](
-            include_top=False,
-            pooling='avg',
-            weights=None
-        )
-    model = AudioModelBuilder(**model_config).get_model(
-        num_classes,
-        audio_augmentations=[AVAILABLE_AUDIO_AUGMENTATIONS[audio_augmentation]() for audio_augmentation in args.audio_augmentations],
-        spectrum_augmentations=[AVAILABLE_SPECTROGRAM_AUGMENTATIONS[spectrogram_augmentation]() for spectrogram_augmentation in args.spectrogram_augmentations],
-        predefined_model=predefined_model,
+    trainer = Trainer(
+        sample_rate=args.sample_rate,
+        window=args.window,
+        step=args.step,
+        stft_nfft=args.stft_nfft,
+        stft_win=args.stft_win,
+        stft_hop=args.stft_hop,
+        stft_nmels=args.stft_nmels,
+        mel_f_min=args.mel_f_min,
+        predefined_model=args.model,
+        audio_augmentations=args.audio_augmentations,
+        spectrogram_augmentations=args.spectrogram_augmentations
     )
-    optimizer = Adam
-    if args.optimizer:
-        optimizer = AVAILABLE_KERAS_OPTIMIZERS[args.optimizer]
-
-    model.compile(
-        optimizer(learning_rate=args.learning_rate),
-        loss="categorical_crossentropy" if num_classes > 2 else "binary_crossentropy",
-        weighted_metrics=['accuracy', Precision(), Recall()]
-    )
-    val_size = 0.2
-    train_num_items = len(x) - round(len(x)*val_size)
-    
-    print("Preparing datasets")
-
-    output_signature = (
-        tf.TensorSpec(shape=(int(args.sample_rate*args.window)), dtype=tf.int16),
-        tf.TensorSpec(shape=(num_classes if num_classes > 2 else 1), dtype=tf.int64),
-        tf.TensorSpec(shape=(), dtype=tf.float64)
-    )
-
-    def generate(_X, _Y):
-        def _gen():
-            for _item in zip(_X, _Y, class_weight.compute_sample_weight('balanced', _Y)):
-                yield _item
-        return _gen
-
-    # Prepare the train dataset.
-    train_dataset = tf.data.Dataset.from_generator(
-        generate(x[:train_num_items], y[:train_num_items]),
-        output_signature=output_signature,
-    ).shuffle(train_num_items//10).batch(args.batch_size)
-
-    # Prepare the validation dataset.
-    val_dataset = tf.data.Dataset.from_generator(
-        generate(x[train_num_items:], y[train_num_items:]),
-        output_signature=output_signature,
-    ).batch(args.batch_size)
-
-    checkpoint_filepath = f'{CHECKPOINTS_FOLDER}/{MODEL_ID}.keras'
-    print("Starting training")
-    
-    history = model.fit(train_dataset,
-                        validation_data=val_dataset,
-                        epochs=args.epochs,
-                        callbacks=[
-                            callbacks.ModelCheckpoint(
-                                filepath=checkpoint_filepath,
-                                monitor='val_loss',
-                                mode='min',
-                                save_best_only=True
-                            ),
-                            callbacks.EarlyStopping(
-                                monitor='val_accuracy',
-                                min_delta=0.025,
-                                verbose=1,
-                                patience=50
-                            ),
-                            callbacks.ReduceLROnPlateau(
-                                verbose=1,
-                                patience=25
-                            ),
-                            callbacks.TensorBoard(
-                                log_dir=f'logs/{MODEL_ID}/'
-                            )
-                        ]
+    model, history = trainer.train(
+        x,
+        y,
+        val_size=0.2,
+        optimizer=args.optimizer,
+        learning_rate=args.learning_rate,
+        checkpoints_folder=CHECKPOINTS_FOLDER,
+        model_id=MODEL_ID,
     )
     plot_history(history)
     os.makedirs('histories', exist_ok=True)

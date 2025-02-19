@@ -1,7 +1,7 @@
 import argparse
 import json
 
-from predictor import AudioClassifier, AudioSegmenter
+from classes import AudioClassifier, AudioSegmenter
 
 TASK2MODEL = {
     'classify': AudioClassifier,

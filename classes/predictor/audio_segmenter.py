@@ -1,4 +1,4 @@
-from predictor.audio_model import AudioModel
+from classes.predictor.audio_model import AudioModel
 
 
 class AudioSegmenter(AudioModel):
