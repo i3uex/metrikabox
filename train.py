@@ -1,12 +1,9 @@
 import os
 import json
 import argparse
-from collections import Counter
-
 from matplotlib import pyplot as plt
-
 from classes import Trainer
-from loaders import FolderLoader, ClassLoaderFromFolderName
+from classes.dataset import Dataset
 from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS, CHECKPOINTS_FOLDER
 from model.builder import DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, DEFAULT_MEL_F_MIN
 from constants import *
@@ -42,28 +39,6 @@ if not args.folder.endswith("/"):
 MODEL_ID = args.model_id
 
 
-def load_data():
-    """
-    Loads the data to train the model
-    :return: loaded data in a tuple (x, y, num_classes)
-    """
-    class_loader = ClassLoaderFromFolderName()
-    if args.class_loader:
-        class_loader = AVAILABLE_CLASS_LOADERS[args.class_loader]()
-    data_loader = FolderLoader(
-        sample_rate=args.sample_rate,
-        window=args.window,
-        step=args.step,
-        class_loader=class_loader,
-        out_folder=args.folder,
-        use_mmap=args.use_mmap
-    )
-    x, y = data_loader.load(args.folder, classes2avoid=args.classes2avoid)
-    assert len(y) == len(x)
-    print(Counter(y))
-    return x, y
-
-
 def plot_history(history):
     """
     Plots the history of the model training
@@ -86,7 +61,7 @@ def plot_history(history):
     plt.show()
 
 
-def train(x, y):
+def train():
     """
     Trains the model
     :param x: Audio data
@@ -95,9 +70,6 @@ def train(x, y):
     :return:
     """
     trainer = Trainer(
-        sample_rate=args.sample_rate,
-        window=args.window,
-        step=args.step,
         stft_nfft=args.stft_nfft,
         stft_win=args.stft_win,
         stft_hop=args.stft_hop,
@@ -107,9 +79,16 @@ def train(x, y):
         audio_augmentations=args.audio_augmentations,
         spectrogram_augmentations=args.spectrogram_augmentations
     )
+    dataset = Dataset(
+        args.folder,
+        sample_rate=args.sample_rate,
+        window=args.window,
+        step=args.step,
+        classes2avoid=args.classes2avoid,
+        class_loader=args.class_loader
+    )
     model, history = trainer.train(
-        x,
-        y,
+        dataset,
         val_size=0.2,
         optimizer=args.optimizer,
         learning_rate=args.learning_rate,
@@ -123,4 +102,4 @@ def train(x, y):
 
 
 if __name__ == '__main__':
-    train(*load_data())
+    train()

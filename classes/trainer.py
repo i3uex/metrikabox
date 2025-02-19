@@ -2,11 +2,12 @@ import json
 import os
 import time
 from typing import List, Tuple, Collection
-import numpy as np
 import tensorflow as tf
 from sklearn.utils import class_weight
 from sklearn.preprocessing import LabelBinarizer
-from config import DEFAULT_WINDOW, DEFAULT_STEP, DEFAULT_SAMPLE_RATE, MODEL_CONFIG_FOLDER, DEFAULT_BATCH_SIZE, \
+
+from classes.dataset import Dataset
+from config import MODEL_CONFIG_FOLDER, DEFAULT_BATCH_SIZE, \
     DEFAULT_EPOCHS, CHECKPOINTS_FOLDER
 from model.builder import AudioModelBuilder, DEFAULT_STFT_HOP, DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_N_MELS, \
     DEFAULT_MEL_F_MIN
@@ -26,9 +27,6 @@ def generate(x: Collection, y: Collection) -> callable:
 class Trainer:
     def __init__(
             self,
-            sample_rate: int = DEFAULT_SAMPLE_RATE,
-            window: float = DEFAULT_WINDOW,
-            step: float = DEFAULT_STEP,
             stft_nfft: int = DEFAULT_STFT_N_FFT,
             stft_win: int = DEFAULT_STFT_WIN,
             stft_hop: int = DEFAULT_STFT_HOP,
@@ -39,9 +37,6 @@ class Trainer:
             spectrogram_augmentations: List[SpectrogramAugmentationLayer] = None
     ):
         self.model_config = {
-            "sample_rate": sample_rate,
-            "window": window,
-            "step": step,
             "stft_nfft": stft_nfft,
             "stft_window": stft_win,
             "stft_hop": stft_hop,
@@ -58,8 +53,14 @@ class Trainer:
         self.audio_augmentations = audio_augmentations
         self.spectrogram_augmentations = spectrogram_augmentations
 
-    def _get_model(self, num_classes: int):
-        return AudioModelBuilder(**self.model_config).get_model(
+    def _get_model(self, num_classes: int, sample_rate: int, window: float, step: float):
+        model_config = self.model_config.copy()
+        model_config.update({
+            "sample_rate": sample_rate,
+            "window": window,
+            "step": step
+        })
+        return AudioModelBuilder(**model_config).get_model(
             num_classes,
             audio_augmentations=[AVAILABLE_AUDIO_AUGMENTATIONS[audio_augmentation]() for audio_augmentation in
                                  self.audio_augmentations],
@@ -77,8 +78,7 @@ class Trainer:
 
     def train(
             self,
-            x: Collection[np.ndarray],
-            y: Collection[str],
+            dataset: Dataset,
             val_size: float = 0.2,
             optimizer: str = None,
             learning_rate: float = 0.001,
@@ -87,15 +87,18 @@ class Trainer:
             checkpoints_folder: str = CHECKPOINTS_FOLDER,
             model_id: str = "model"
     ) -> Tuple[tf.keras.Model, tf.keras.callbacks.History]:
+
         if not model_id:
-            model_id = f"{int(time.time())}_{self.model_config['sample_rate']}Hz_{self.model_config['window']}w_{self.model_config['step']}s"
+            model_id = f"{int(time.time())}_{dataset.sample_rate}Hz_{dataset.window}w_{dataset.step}s"
+
+        x, y = dataset.load()
 
         # Create Label Encoder and dump model config
         encoder = LabelBinarizer()
         y = encoder.fit_transform(y)
         num_classes = len(encoder.classes_)
         self._dump_model_config(model_id)
-        model = self._get_model(num_classes)
+        model = self._get_model(num_classes, dataset.sample_rate, dataset.window, dataset.step)
 
         # Prepare model optimizer
         if optimizer:
@@ -114,7 +117,7 @@ class Trainer:
 
         # Prepare model output signature
         output_signature = (
-            tf.TensorSpec(shape=(int(self.model_config['sample_rate'] * self.model_config['window'])), dtype=tf.int16),
+            tf.TensorSpec(shape=(int(dataset.sample_rate * dataset.window)), dtype=tf.int16),
             tf.TensorSpec(shape=(num_classes if num_classes > 2 else 1), dtype=tf.int64),
             tf.TensorSpec(shape=(), dtype=tf.float64)
         )
