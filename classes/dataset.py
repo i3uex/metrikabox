@@ -30,9 +30,7 @@ class Dataset:
             sample_rate=self.sample_rate,
             window=self.window,
             step=self.step,
-            class_loader=class_loader,
-            out_folder="",
-            use_mmap=False
+            class_loader=class_loader
         )
 
     def load(self):
