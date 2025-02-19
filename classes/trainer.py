@@ -1,16 +1,11 @@
 import json
 import os
 import time
-from typing import List, Tuple
-
-import keras
+from typing import List, Tuple, Collection
+import numpy as np
 import tensorflow as tf
-from keras import callbacks
-from keras.optimizers import Adam
-from keras.metrics import Precision, Recall, CategoricalAccuracy, BinaryAccuracy
 from sklearn.utils import class_weight
 from sklearn.preprocessing import LabelBinarizer
-
 from config import DEFAULT_WINDOW, DEFAULT_STEP, DEFAULT_SAMPLE_RATE, MODEL_CONFIG_FOLDER, DEFAULT_BATCH_SIZE, \
     DEFAULT_EPOCHS, CHECKPOINTS_FOLDER
 from model.builder import AudioModelBuilder, DEFAULT_STFT_HOP, DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_N_MELS, \
@@ -20,9 +15,9 @@ from constants import AVAILABLE_KERAS_MODELS, AVAILABLE_AUDIO_AUGMENTATIONS, AVA
     AVAILABLE_KERAS_OPTIMIZERS
 
 
-def generate(_X, _Y):
+def generate(x: Collection, y: Collection) -> callable:
     def _gen():
-        for _item in zip(_X, _Y, class_weight.compute_sample_weight('balanced', _Y)):
+        for _item in zip(x, y, class_weight.compute_sample_weight('balanced', y)):
             yield _item
 
     return _gen
@@ -63,7 +58,7 @@ class Trainer:
         self.audio_augmentations = audio_augmentations
         self.spectrogram_augmentations = spectrogram_augmentations
 
-    def _get_model(self, num_classes):
+    def _get_model(self, num_classes: int):
         return AudioModelBuilder(**self.model_config).get_model(
             num_classes,
             audio_augmentations=[AVAILABLE_AUDIO_AUGMENTATIONS[audio_augmentation]() for audio_augmentation in
@@ -73,7 +68,7 @@ class Trainer:
             predefined_model=self.predefined_model,
         )
 
-    def _dump_model_config(self, model_id):
+    def _dump_model_config(self, model_id: str):
         model_id_config_folder = f'{MODEL_CONFIG_FOLDER}/{model_id}'
         if not os.path.exists(model_id_config_folder):
             os.mkdir(model_id_config_folder)
@@ -82,83 +77,88 @@ class Trainer:
 
     def train(
             self,
-            x,
-            y,
-            val_size=0.2,
-            optimizer=None,
-            learning_rate=0.001,
-            batch_size=DEFAULT_BATCH_SIZE,
-            epochs=DEFAULT_EPOCHS,
-            checkpoints_folder=CHECKPOINTS_FOLDER,
-            model_id="model"
-    ) -> Tuple[keras.Model, callbacks.History]:
+            x: Collection[np.ndarray],
+            y: Collection[str],
+            val_size: float = 0.2,
+            optimizer: str = None,
+            learning_rate: float = 0.001,
+            batch_size: int = DEFAULT_BATCH_SIZE,
+            epochs: int = DEFAULT_EPOCHS,
+            checkpoints_folder: str = CHECKPOINTS_FOLDER,
+            model_id: str = "model"
+    ) -> Tuple[tf.keras.Model, tf.keras.callbacks.History]:
         if not model_id:
             model_id = f"{int(time.time())}_{self.model_config['sample_rate']}Hz_{self.model_config['window']}w_{self.model_config['step']}s"
 
-        # Create Label Encoder
+        # Create Label Encoder and dump model config
         encoder = LabelBinarizer()
         y = encoder.fit_transform(y)
         num_classes = len(encoder.classes_)
         self._dump_model_config(model_id)
-
         model = self._get_model(num_classes)
 
+        # Prepare model optimizer
         if optimizer:
             optimizer = AVAILABLE_KERAS_OPTIMIZERS[optimizer]
         else:
-            optimizer = Adam
+            optimizer = tf.keras.optimizers.Adam
         model.compile(
             optimizer(learning_rate=learning_rate),
             loss="categorical_crossentropy" if num_classes > 2 else "binary_crossentropy",
-            weighted_metrics=[CategoricalAccuracy() if num_classes > 2 else BinaryAccuracy(), Precision(),
-                              Recall()]
+            weighted_metrics=[
+                tf.keras.metrics.CategoricalAccuracy() if num_classes > 2 else tf.keras.metrics.BinaryAccuracy(),
+                tf.keras.metrics.Precision(),
+                tf.keras.metrics.Recall()
+            ]
         )
-        train_num_items = len(x) - round(len(x) * val_size)
-        print("Preparing datasets")
+
+        # Prepare model output signature
         output_signature = (
             tf.TensorSpec(shape=(int(self.model_config['sample_rate'] * self.model_config['window'])), dtype=tf.int16),
             tf.TensorSpec(shape=(num_classes if num_classes > 2 else 1), dtype=tf.int64),
             tf.TensorSpec(shape=(), dtype=tf.float64)
         )
 
-        # Prepare the train dataset.
+        # Prepare datasets
+        train_num_items = len(x) - round(len(x) * val_size)
+
         train_dataset = tf.data.Dataset.from_generator(
             generate(x[:train_num_items], y[:train_num_items]),
             output_signature=output_signature,
         ).shuffle(train_num_items // 10).batch(batch_size, drop_remainder=True)
 
-        # Prepare the validation dataset.
         val_dataset = tf.data.Dataset.from_generator(
             generate(x[train_num_items:], y[train_num_items:]),
             output_signature=output_signature,
         ).batch(batch_size, drop_remainder=True)
 
         checkpoint_filepath = f'{checkpoints_folder}/{model_id}.keras'
-        print("Starting training")
 
+        # Perform training
+        print("Starting training")
         history = model.fit(
             train_dataset,
             validation_data=val_dataset,
             epochs=epochs,
             callbacks=[
-              callbacks.ModelCheckpoint(
+              tf.keras.callbacks.ModelCheckpoint(
                   filepath=checkpoint_filepath,
                   monitor='val_loss',
                   mode='min',
                   save_best_only=True
               ),
-              callbacks.EarlyStopping(
+              tf.keras.callbacks.EarlyStopping(
                   monitor='val_accuracy',
                   mode="min",
                   min_delta=0.025,
                   verbose=1,
                   patience=50
               ),
-              callbacks.ReduceLROnPlateau(
+              tf.keras.callbacks.ReduceLROnPlateau(
                   verbose=1,
                   patience=25
               ),
-              callbacks.TensorBoard(
+              tf.keras.callbacks.TensorBoard(
                   log_dir=f'logs/{model_id}/'
               )
             ]

@@ -83,7 +83,6 @@ def plot_history(history):
     bx.set_ylabel('loss')
     bx.set_xlabel('epoch')
     bx.legend(['train', 'val'], loc='upper left')
-    #plt.savefig(f"{str(MODEL_ID)}_loss.png")
     plt.show()
 
 

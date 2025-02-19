@@ -8,11 +8,11 @@ class FileLoader:
     """
     Class to load audio files
     """
-    def __init__(self, sample_rate:int, window:float, step:float):
+    def __init__(self, sample_rate: int, window: float, step: float):
         self.sr = sample_rate
         self.window = window
         self.step = step
 
-    def load(self, audio: Union[str, np.array, AudioSegment]) -> np.ndarray:
+    def load(self, audio: Union[str, np.ndarray, AudioSegment]) -> np.ndarray:
         return apply_window(load_audio(audio, sr=self.sr), window=self.window, step=self.step, sr=self.sr)
 

@@ -1,3 +1,4 @@
+import numpy as np
 from classes.predictor.audio_model import AudioModel
 
 
@@ -5,7 +6,7 @@ class AudioSegmenter(AudioModel):
     """
     Class to segment audio classes
     """
-    def format_output(self, y):
+    def format_output(self, y: np.ndarray):
         """
         Format the output of the model
         :param y: class predictions

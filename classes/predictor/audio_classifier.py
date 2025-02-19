@@ -6,7 +6,7 @@ class AudioClassifier(AudioModel):
     """
     Class to predict audio classes
     """
-    def format_output(self, y):
+    def format_output(self, y: np.ndarray):
         """
         Format the output of the model
         :param y: class predictions

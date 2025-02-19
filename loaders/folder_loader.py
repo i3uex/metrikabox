@@ -2,10 +2,9 @@ import glob
 import os
 import pickle
 import random
-import sys
 from concurrent.futures import ProcessPoolExecutor
 import multiprocessing
-from typing import Tuple
+from typing import Tuple, Collection
 
 import numpy as np
 from tqdm import tqdm
@@ -19,12 +18,12 @@ BASE_PATH = ''
 
 class FolderLoader:
     def __init__(self,
-                 sample_rate:int=DEFAULT_SAMPLE_RATE,
-                 window:float=DEFAULT_WINDOW,
-                 step:float=DEFAULT_STEP,
-                 use_mmap:bool=False,
-                 class_loader:ClassLoader=ClassLoader(),
-                 out_folder:str=BASE_PATH
+                 sample_rate: int = DEFAULT_SAMPLE_RATE,
+                 window: float = DEFAULT_WINDOW,
+                 step: float = DEFAULT_STEP,
+                 use_mmap: bool = False,
+                 class_loader: ClassLoader = ClassLoader(),
+                 out_folder: str = BASE_PATH
                  ):
         """
         Class to load audio files from a folder
@@ -47,7 +46,13 @@ class FolderLoader:
         self.CLASSES_PATH = f'{out_folder}CLASSES.npy'
         self.MMAP_SHAPE_FILE = f'{out_folder}MMAP_shape.pkl'
 
-    def load(self, folder:str, max_files:int=None, classes2avoid=(), audio_formats=(".wav", ".mp3")) -> Tuple[np.ndarray, list]:
+    def load(
+            self,
+            folder: str,
+            max_files: int = None,
+            classes2avoid: Collection[str] = (),
+            audio_formats: Collection[str] = (".wav", ".mp3")
+    ) -> Tuple[np.ndarray, list]:
         """
         Load audio files from a folder
         :param folder: Folder containing the audio files
@@ -56,7 +61,9 @@ class FolderLoader:
         :param audio_formats: Desired audio formats
         :return: Array with the audio data and a list with the classes
         """
-        items = list(filter(lambda x: not os.path.isdir(x) and (any([x.lower().endswith(f) for f in audio_formats]) if audio_formats else True), glob.glob(folder + '**', recursive=True)))
+        items = list(filter(lambda x: not os.path.isdir(x) and (
+            any([x.lower().endswith(f) for f in audio_formats]) if audio_formats else True),
+                            glob.glob(folder + '**', recursive=True)))
         if max_files:
             items = items[:max_files]
         # Load audio files
@@ -115,7 +122,7 @@ class FolderLoader:
             with open(self.MMAP_SHAPE_FILE, 'wb') as f:
                 pickle.dump(out_shape, f)
             X = np.memmap(self.MMAP_PATH, dtype=np.float32, mode='r+')
-            X = X.reshape(X.size//int(self.sr*self.window), int(self.sr*self.window), 1)
+            X = X.reshape(X.size // int(self.sr * self.window), int(self.sr * self.window), 1)
             rstate = np.random.RandomState(seed)
             rstate.shuffle(X)
             X.flush()

@@ -1,4 +1,3 @@
-import math
 from typing import Union
 from pydub import AudioSegment
 import numpy as np
@@ -24,11 +23,11 @@ class Singleton(type):
 
 
 def __window(
-        x: np.array,
+        x: np.ndarray,
         window_seconds: float = DEFAULT_WINDOW,
         step_seconds: float = DEFAULT_STEP,
         sr: int = DEFAULT_SAMPLE_RATE
-        ) -> np.ndarray:
+) -> np.ndarray:
     """
     Apply a window to the audio
     :param x: Audio in np array format
@@ -44,7 +43,7 @@ def __window(
     return np.lib.stride_tricks.as_strided(x, strides=strides, shape=shape, writeable=False)[0::step_frames]
 
 
-def load_audio(audio: Union[str, np.array, AudioSegment], sr=16000):
+def load_audio(audio: Union[str, np.ndarray, AudioSegment], sr=16000) -> np.ndarray:
     if type(audio) is str:
         audio = AudioSegment.from_file(audio)
     if type(audio) is AudioSegment:
@@ -52,12 +51,13 @@ def load_audio(audio: Union[str, np.array, AudioSegment], sr=16000):
     return audio
 
 
-def apply_window(audio: np.array,
-                 window: float = DEFAULT_WINDOW,
-                 step: float = DEFAULT_STEP,
-                 sr: int = DEFAULT_SAMPLE_RATE,
-                 pad_mode="constant"
-                 ) -> np.ndarray:
+def apply_window(
+        audio: np.ndarray,
+        window: float = DEFAULT_WINDOW,
+        step: float = DEFAULT_STEP,
+        sr: int = DEFAULT_SAMPLE_RATE,
+        pad_mode="constant"
+) -> np.ndarray:
     """
     Apply a window to the audio
     :param audio: Audio in np array format
@@ -68,6 +68,12 @@ def apply_window(audio: np.array,
     :param dtype: desired output type. Default is int16
     :return: windowed audio
     """
-    spare_items = len(audio) % int(sr * step)
-    pad_width = (int(sr * step) - spare_items) if spare_items > 0 else 0
-    return __window(np.pad(audio, pad_width=(0, pad_width), mode=pad_mode), window_seconds=window, step_seconds=step, sr=sr)
+    items_per_step = int(sr * step)
+    spare_items = len(audio) % items_per_step
+    pad_width = (items_per_step - spare_items) if spare_items > 0 else 0
+    return __window(
+        np.pad(audio, pad_width=(0, pad_width), mode=pad_mode),
+        window_seconds=window,
+        step_seconds=step,
+        sr=sr
+    )

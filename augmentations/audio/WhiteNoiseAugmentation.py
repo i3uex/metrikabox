@@ -8,7 +8,7 @@ class WhiteNoiseAugmentation(AudioAugmentationLayer):
     """
     Layer to apply white noise augmentation over the audio
     """
-    def __init__(self, max_snr=15, min_snr=30, **kwargs):
+    def __init__(self, max_snr: float = 15., min_snr: float = 30, **kwargs):
         """
         Layer to apply white noise augmentation over the audio
         :param max_snr: maximum signal to noise ratio
