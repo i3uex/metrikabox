@@ -15,12 +15,19 @@ from audio_classifier.constants import AVAILABLE_KERAS_MODELS, AVAILABLE_AUDIO_A
 from audio_classifier.utils import LOGGER
 
 
-def generate(x: Collection, y: Collection) -> callable:
+def _generate(x: Collection, y: Collection) -> callable:
     def _gen():
         for _item in zip(x, y, class_weight.compute_sample_weight('balanced', y)):
             yield _item
 
     return _gen
+
+
+def _dump_model_config(model_id: str, model_config: dict, checkpoints_folder: str = CHECKPOINTS_FOLDER):
+    model_id_config_folder = f'{checkpoints_folder}/{MODEL_CONFIG_FOLDER}/{model_id}'
+    os.makedirs(model_id_config_folder, exist_ok=True)
+    with open(f'{model_id_config_folder}/model-config.json', "w") as f:
+        json.dump(model_config, f)
 
 
 class Trainer:
@@ -65,26 +72,14 @@ class Trainer:
             for spectrogram_augmentation in spectrogram_augmentations
         ]
 
-    def _get_model(self, num_classes: int, sample_rate: int, window: float, step: float):
-        model_config = self.model_config.copy()
-        model_config.update({
-            "sample_rate": sample_rate,
-            "window": window,
-            "step": step
-        })
+    def _get_model(self, model_config: dict):
+        num_classes = len(model_config.pop('classes'))
         return AudioModelBuilder(**model_config).get_model(
             num_classes,
             audio_augmentations=self.audio_augmentations,
             spectrum_augmentations=self.spectrogram_augmentations,
             predefined_model=self.predefined_model,
         )
-
-    def _dump_model_config(self, model_id: str):
-        model_id_config_folder = f'{MODEL_CONFIG_FOLDER}/{model_id}'
-        if not os.path.exists(model_id_config_folder):
-            os.mkdir(model_id_config_folder)
-        with open(f'{model_id_config_folder}/model-config.json', "w") as f:
-            json.dump(self.model_config, f)
 
     def train(
             self,
@@ -104,8 +99,15 @@ class Trainer:
         encoder = LabelBinarizer()
         y = encoder.fit_transform(y)
         num_classes = len(encoder.classes_)
-        self._dump_model_config(model_id)
-        model = self._get_model(num_classes, dataset.sample_rate, dataset.window, dataset.step)
+        model_config = self.model_config.copy()
+        model_config.update({
+            "sample_rate": dataset.sample_rate,
+            "window": dataset.window,
+            "step": dataset.step,
+            "classes": encoder.classes_.tolist()
+        })
+        _dump_model_config(model_id, model_config)
+        model = self._get_model(model_config)
 
         # Prepare model optimizer
         if optimizer:
@@ -133,12 +135,12 @@ class Trainer:
         train_num_items = len(x) - round(len(x) * val_size)
 
         train_dataset = tf.data.Dataset.from_generator(
-            generate(x[:train_num_items], y[:train_num_items]),
+            _generate(x[:train_num_items], y[:train_num_items]),
             output_signature=output_signature,
         ).shuffle(train_num_items // 10).batch(batch_size, drop_remainder=True)
 
         val_dataset = tf.data.Dataset.from_generator(
-            generate(x[train_num_items:], y[train_num_items:]),
+            _generate(x[train_num_items:], y[train_num_items:]),
             output_signature=output_signature,
         ).batch(batch_size, drop_remainder=True)
 
@@ -158,11 +160,10 @@ class Trainer:
                   save_best_only=True
               ),
               tf.keras.callbacks.EarlyStopping(
-                  monitor='val_accuracy',
-                  mode="min",
+                  monitor='val_categorical_accuracy' if num_classes > 2 else 'val_binary_accuracy',
                   min_delta=0.025,
                   verbose=1,
-                  patience=50
+                  patience=25
               ),
               tf.keras.callbacks.ReduceLROnPlateau(
                   verbose=1,

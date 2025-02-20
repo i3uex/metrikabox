@@ -6,7 +6,7 @@ import fire
 from matplotlib import pyplot as plt
 from audio_classifier import Dataset
 from audio_classifier import AudioClassifier, AudioSegmenter, Trainer
-from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_STEP, DEFAULT_WINDOW, CHECKPOINTS_FOLDER
+from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_STEP, DEFAULT_WINDOW, CHECKPOINTS_FOLDER, MODEL_CONFIG_FOLDER
 from audio_classifier.model.builder import DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, DEFAULT_MEL_F_MIN
 from audio_classifier.utils import LOGGER
 
@@ -44,18 +44,22 @@ class Main:
     def predict(
             self,
             filename,
-            model_id,
+            model_path,
+            model_config_path=None,
             task='segment'
     ):
         if __name__ == '__main__':
             if task not in TASK2MODEL:
                 LOGGER.error(f"Task {task} is not supported. Supported tasks are {TASK2MODEL.keys()}")
                 exit()
-            model = TASK2MODEL[task](model_id)
+            if not model_config_path:
+                base_path, model_name = model_path.rsplit('.', 1)[0].rsplit('/', 1)
+                model_config_path = f"{base_path}/{MODEL_CONFIG_FOLDER}/{model_name}/model-config.json"
+            model = TASK2MODEL[task](model_path, model_config_path)
             base_file_name = filename.split(".", 1)[0]
             probabilities = model.predict_without_format(filename)
             with open(f"{base_file_name}_probas.json", 'w') as f:
-                json.dump(probabilities, f)
+                json.dump(probabilities.tolist(), f)
             predictions = model.format_output(probabilities)
             with open(f"{base_file_name}.json", 'w') as f:
                 json.dump(predictions, f)
