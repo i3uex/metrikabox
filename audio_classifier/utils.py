@@ -46,9 +46,9 @@ def __window(
     return np.lib.stride_tricks.as_strided(x, strides=strides, shape=shape, writeable=False)[0::step_frames]
 
 
-def load_audio(audio: Union[str, np.ndarray, AudioSegment], sr=16000) -> np.ndarray:
+def load_audio(audio: Union[str, np.ndarray, AudioSegment], sr: int = 16000, max_duration: float = None) -> np.ndarray:
     if type(audio) is str:
-        audio = AudioSegment.from_file(audio)
+        audio = AudioSegment.from_file(audio, duration=max_duration)
     if type(audio) is AudioSegment:
         audio = audio.set_channels(1).set_frame_rate(sr).set_sample_width(2).get_array_of_samples()
     return audio
