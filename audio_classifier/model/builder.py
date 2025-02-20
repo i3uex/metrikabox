@@ -148,12 +148,14 @@ class AudioModelBuilder:
 
 if __name__ == '__main__':
     import math
-    import librosa
     import matplotlib.pyplot as plt
-
+    step = 2.5
+    window = 5
+    sample_rate = 16000
+    fl = FileLoader(sample_rate=sample_rate, window=window, step=step)
+    windowed_audio = fl.load("../example.ogg", max_duration=10)
     # Create model builder
-    builder = AudioModelBuilder(window=5, step=2.5)
-    audio = builder.load_file(librosa.util.example('brahms'))
+    builder = AudioModelBuilder(sample_rate=sample_rate, window=window, step=step)
 
     model = Sequential()
     # Normalize int16 to float32
@@ -162,7 +164,7 @@ if __name__ == '__main__':
     stft = builder.get_melspectrogram()
     model.add(stft)
     # Predict melspectrogram of windowed items
-    melspectrograms = model.predict(audio)
+    melspectrograms = model.predict(windowed_audio)
 
     plt.figure()
     width = round(math.sqrt(melspectrograms.shape[0]))

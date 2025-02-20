@@ -1,9 +1,7 @@
-pydub
-librosa
-numpy
+pydub>=0.25.1
+numpy<2
 scikit-learn
 matplotlib
 keras>=3.1
 tensorflow
-kito
 tqdm
