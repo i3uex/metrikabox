@@ -1,12 +1,12 @@
 import numpy as np
-from predictor.audio_model import AudioModel
+from classes.predictor.audio_model import AudioModel
 
 
 class AudioClassifier(AudioModel):
     """
     Class to predict audio classes
     """
-    def _format_output(self, y):
+    def format_output(self, y: np.ndarray):
         """
         Format the output of the model
         :param y: class predictions

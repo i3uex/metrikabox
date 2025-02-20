@@ -1,38 +1,22 @@
 import os
 import json
-import time
-import pickle
 import argparse
-import importlib
-from collections import Counter
-from inspect import getmembers, isfunction, isclass
-
 from matplotlib import pyplot as plt
-from sklearn.utils import class_weight
-from sklearn.preprocessing import LabelBinarizer
-import tensorflow as tf
-from tensorflow.data import Dataset
-from tensorflow.keras import callbacks
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.metrics import Precision, Recall, CategoricalAccuracy
+from classes import Trainer
+from classes.dataset import Dataset
+from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS, CHECKPOINTS_FOLDER
+from model.builder import DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, DEFAULT_MEL_F_MIN
+from constants import *
 
-from loaders import FolderLoader, ClassLoaderFromSameFileName
-from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS, CHECKPOINTS_FOLDER, MODEL_CONFIG_FOLDER
-from model.model import AudioModelBuilder, DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, DEFAULT_MEL_F_MIN
-from augmentations.audio import WhiteNoiseAugmentation
-
-AVAILABLE_KERAS_MODELS = {model_name: model for model_name, model in getmembers(importlib.import_module('tensorflow.keras.applications'), isfunction)}
-AVAILABLE_KERAS_OPTIMIZERS = {optimizer_name: optimizer for optimizer_name, optimizer in getmembers(importlib.import_module('tensorflow.keras.optimizers'), isclass)}
-AVAILABLE_CLASS_LOADERS = {class_loader_name: class_loader for class_loader_name, class_loader in getmembers(importlib.import_module('loaders.class_loader'), isclass)}
 parser = argparse.ArgumentParser(prog='AudioTrain', description='Trains')
-parser.add_argument('folder')
-parser.add_argument('--model_id', default=int(time.time()))
+parser.add_argument('folder', help='Folder with the dataset to be used')
+parser.add_argument('--model_id', default=None, help='Model id to be used')
 parser.add_argument('-sr', '--sample_rate', default=DEFAULT_SAMPLE_RATE, type=int, help='Sample rate the audio will be converted to')
 parser.add_argument('--window', default=DEFAULT_WINDOW, type=float, help='Time in seconds to be processed as a single item')
 parser.add_argument('--step', default=DEFAULT_STEP, type=float, help='Time in seconds to skip between windows. It is recommendable for step to be maximum half of the window to have overlap between windows and don\'t lose information')
 parser.add_argument('--use_mmap', action='store_true', help="Whether to create an intermediate mmap to dump the data to for processing. Useful when no enough RAM is available to fit the audios")
-parser.add_argument('--batch_size', default=DEFAULT_BATCH_SIZE, type=int)
-parser.add_argument('--epochs', default=DEFAULT_EPOCHS, type=int)
+parser.add_argument('--batch_size', default=DEFAULT_BATCH_SIZE, type=int, help='Batch size for the training')
+parser.add_argument('--epochs', default=DEFAULT_EPOCHS, type=int, help='Number of epochs to train the model')
 parser.add_argument('--stft_nfft', default=DEFAULT_STFT_N_FFT, type=int, help='Length of the FFT window')
 parser.add_argument('--stft_win', default=DEFAULT_STFT_WIN, type=int, help='Each frame of audio is windowed by window of length win_length and then padded with zeros to match n_fft')
 parser.add_argument('--stft_hop', default=DEFAULT_STFT_HOP, type=int, help='Number of samples between successive frames')
@@ -41,62 +25,18 @@ parser.add_argument('--mel_f_min', default=DEFAULT_MEL_F_MIN, type=int, help='Lo
 parser.add_argument('--model', default=None, choices=AVAILABLE_KERAS_MODELS.keys(), help='Any of the models of keras.applications that will be used as classification model')
 parser.add_argument('--optimizer', default=None, choices=AVAILABLE_KERAS_OPTIMIZERS.keys(), help='Any of the optimizers of keras.optimizers that will be used as optimizer in model training')
 parser.add_argument('--class_loader', default=None, choices=AVAILABLE_CLASS_LOADERS.keys(), help='Any of the available class loaders')
-parser.add_argument('--learning_rate', default=0.001, type=float)
-parser.add_argument('--trainset_shuffle_size', default=1024, type=int)
+parser.add_argument('--learning_rate', default=0.001, type=float, help='Learning rate for the optimizer')
+parser.add_argument('--trainset_shuffle_size', default=1024, type=int, help='Size of the shuffle buffer for the train dataset')
+parser.add_argument('--audio_augmentations', default=[], nargs='+', choices=AVAILABLE_AUDIO_AUGMENTATIONS.keys(), help='Any of the available audio augmentations. No one will be used if not specified')
+parser.add_argument('--spectrogram_augmentations', default=[], nargs='+', choices=AVAILABLE_SPECTROGRAM_AUGMENTATIONS.keys(), help='Any of the available spectrogram augmentations. No one will be used if not specified')
+parser.add_argument('--classes2avoid', default=[], nargs='+', help='Classes to avoid in the dataset (not to be loaded)')
+
 args = parser.parse_args()
 
 if not args.folder.endswith("/"):
     args.folder += "/"
 
-if not os.path.exists(MODEL_CONFIG_FOLDER):
-    os.mkdir(MODEL_CONFIG_FOLDER)
-
 MODEL_ID = args.model_id
-MODEL_ID_CONFIG_FOLDER = f'{MODEL_CONFIG_FOLDER}/{MODEL_ID}'
-if not os.path.exists(MODEL_ID_CONFIG_FOLDER):
-    os.mkdir(MODEL_ID_CONFIG_FOLDER)
-
-
-model_config = {
-    "sample_rate": args.sample_rate,
-    "window": args.window,
-    "step": args.step,
-    "stft_nfft": args.stft_nfft,
-    "stft_window": args.stft_win,
-    "stft_hop": args.stft_hop,
-    "stft_nmels": args.stft_nmels,
-    "mel_f_min": args.mel_f_min
-}
-
-with open(f'{MODEL_ID_CONFIG_FOLDER}/model-config.json', "w") as f:
-    json.dump(model_config, f)
-
-
-def load_data():
-    """
-    Loads the data to train the model
-    :return: loaded data in a tuple (x, y, num_classes)
-    """
-    class_loader = ClassLoaderFromSameFileName()
-    if args.class_loader:
-        class_loader = AVAILABLE_CLASS_LOADERS[args.class_loader]()
-    data_loader = FolderLoader(
-        sample_rate=args.sample_rate,
-        window=args.window,
-        step=args.step,
-        class_loader=class_loader,
-        out_folder=args.folder,
-        use_mmap=args.use_mmap
-    )
-    x, y = data_loader.load(args.folder, classes2avoid=["commercial"])
-    assert len(y) == len(x)
-    print(Counter(y))
-    encoder = LabelBinarizer()
-    y = encoder.fit_transform(y)
-    num_classes = len(encoder.classes_)
-    with open(f'{MODEL_ID_CONFIG_FOLDER}/LabelEncoder.pkl', "wb") as f:
-        pickle.dump(encoder, f)
-    return x, y, num_classes
 
 
 def plot_history(history):
@@ -105,110 +45,61 @@ def plot_history(history):
     :param history: History object from keras
     :return:
     """
-    plt.plot(history.history['accuracy'])
-    plt.plot(history.history['val_accuracy'])
-    plt.title('model accuracy')
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'val'], loc='upper left')
-    plt.savefig(f"{str(MODEL_ID)}_acc.png")
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title('model loss')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'val'], loc='upper left')
-    plt.savefig(f"{str(MODEL_ID)}_loss.png")
+    fig, (ax, bx) = plt.subplots(2, 1)
+    ax.plot(history.history['binary_accuracy'] if 'binary_accuracy' in history.history else history.history['categorical_accuracy'])
+    ax.plot(history.history['val_binary_accuracy'] if 'val_binary_accuracy' in history.history else history.history['val_categorical_accuracy'])
+    ax.set_title('model accuracy')
+    ax.set_ylabel('accuracy')
+    ax.set_xlabel('epoch')
+    ax.legend(['train', 'val'], loc='upper left')
+    bx.plot(history.history['loss'])
+    bx.plot(history.history['val_loss'])
+    bx.set_title('model loss')
+    bx.set_ylabel('loss')
+    bx.set_xlabel('epoch')
+    bx.legend(['train', 'val'], loc='upper left')
     plt.show()
 
 
-def train(x, y, num_classes):
+def train():
     """
     Trains the model
-    :param x:
-    :param y:
-    :param num_classes:
+    :param x: Audio data
+    :param y: Labels
+    :param num_classes: Number of classes
     :return:
     """
-    predefined_model = None
-    if args.model:
-        predefined_model = AVAILABLE_KERAS_MODELS[args.model](
-            include_top=False, 
-            pooling='avg', 
-            weights=None
-        )
-    model = AudioModelBuilder(**model_config).get_model(
-        num_classes,
-        predefined_model=predefined_model,
+    trainer = Trainer(
+        stft_nfft=args.stft_nfft,
+        stft_win=args.stft_win,
+        stft_hop=args.stft_hop,
+        stft_nmels=args.stft_nmels,
+        mel_f_min=args.mel_f_min,
+        predefined_model=args.model,
+        audio_augmentations=args.audio_augmentations,
+        spectrogram_augmentations=args.spectrogram_augmentations
     )
-    optimizer = Adam
-    if args.optimizer:
-        optimizer = AVAILABLE_KERAS_OPTIMIZERS[args.optimizer]
-
-    model.compile(
-        optimizer(learning_rate=args.learning_rate),
-        loss="categorical_crossentropy" if num_classes > 2 else "binary_crossentropy",
-        weighted_metrics=['accuracy', Precision(), Recall()]
+    dataset = Dataset(
+        args.folder,
+        sample_rate=args.sample_rate,
+        window=args.window,
+        step=args.step,
+        classes2avoid=args.classes2avoid,
+        class_loader=args.class_loader
     )
-    val_size = 0.2
-    num_items = round(len(x)*val_size)
-    
-    print("Preparing datasets")
-
-    output_signature = (
-        tf.TensorSpec(shape=(int(args.sample_rate*args.window), 1), dtype=tf.float32),
-        tf.TensorSpec(shape=(num_classes), dtype=tf.int64),
-        tf.TensorSpec(shape=(), dtype=tf.float64)
-    )
-
-    def gen(X, Y):
-        computed_sample_weights = class_weight.compute_sample_weight('balanced', Y)
-        for x, y, computed_sample_weight in zip(X, Y, computed_sample_weights):
-            yield x, y, computed_sample_weight
-
-    # Prepare the validation dataset.
-    val_dataset = Dataset.from_generator(
-        lambda: gen(x[-num_items:], y[-num_items:]),
-        output_signature=output_signature,
-    ).batch(args.batch_size)
-
-    # Prepare the train dataset.
-    train_dataset = Dataset.from_generator(
-        lambda: gen(x[:-num_items], y[:-num_items]),
-        output_signature=output_signature,
-    ).shuffle(args.trainset_shuffle_size).batch(args.batch_size)
-    
-    checkpoint_filepath = f'{CHECKPOINTS_FOLDER}/{MODEL_ID}/'
-    print("Starting training")
-    
-    history = model.fit(train_dataset,
-                        validation_data=val_dataset,
-                        epochs=args.epochs,
-                        callbacks=[
-                            callbacks.ModelCheckpoint(
-                                filepath=checkpoint_filepath,
-                                monitor='val_loss',
-                                mode='min',
-                                save_best_only=True
-                            ),
-                            callbacks.EarlyStopping(
-                                monitor='val_accuracy',
-                                min_delta=0.0025,
-                                verbose=1,
-                                patience=50
-                            ),
-                            callbacks.ReduceLROnPlateau(
-                                verbose=1,
-                                patience=25
-                            ),
-                            callbacks.TensorBoard(
-                                log_dir=f'logs/{MODEL_ID}/'
-                            )
-                        ]
+    model, history = trainer.train(
+        dataset,
+        val_size=0.2,
+        optimizer=args.optimizer,
+        learning_rate=args.learning_rate,
+        checkpoints_folder=CHECKPOINTS_FOLDER,
+        model_id=MODEL_ID,
     )
     plot_history(history)
-    model.save("weights.h5")
+    os.makedirs('histories', exist_ok=True)
+    with open(f'histories/{MODEL_ID}.json', "w") as f:
+        json.dump(history.history, f, default=str)
 
 
 if __name__ == '__main__':
-    train(*load_data())
+    train()
