@@ -33,8 +33,8 @@ class Trainer:
             stft_nmels: int = DEFAULT_N_MELS,
             mel_f_min: int = DEFAULT_MEL_F_MIN,
             predefined_model=None,
-            audio_augmentations: List[AudioAugmentationLayer] = None,
-            spectrogram_augmentations: List[SpectrogramAugmentationLayer] = None
+            audio_augmentations: List[str] = (),
+            spectrogram_augmentations: List[str] = ()
     ):
         self.model_config = {
             "stft_nfft": stft_nfft,
@@ -50,8 +50,21 @@ class Trainer:
                 pooling='avg',
                 weights=None
             )
-        self.audio_augmentations = audio_augmentations
-        self.spectrogram_augmentations = spectrogram_augmentations
+        for audio_augmentation in audio_augmentations:
+            if audio_augmentation not in AVAILABLE_AUDIO_AUGMENTATIONS:
+                raise ValueError(f"Audio augmentation {audio_augmentation} not available")
+        self.audio_augmentations = [
+            AVAILABLE_AUDIO_AUGMENTATIONS[audio_augmentation]()
+            for audio_augmentation in audio_augmentations
+        ]
+        for spectrogram_augmentation in spectrogram_augmentations:
+            if spectrogram_augmentation not in AVAILABLE_SPECTROGRAM_AUGMENTATIONS:
+                raise ValueError(f"Spectrogram augmentation {spectrogram_augmentation} not available")
+
+        self.spectrogram_augmentations = [
+            AVAILABLE_SPECTROGRAM_AUGMENTATIONS[spectrogram_augmentation]()
+            for spectrogram_augmentation in spectrogram_augmentations
+        ]
 
     def _get_model(self, num_classes: int, sample_rate: int, window: float, step: float):
         model_config = self.model_config.copy()
@@ -62,10 +75,8 @@ class Trainer:
         })
         return AudioModelBuilder(**model_config).get_model(
             num_classes,
-            audio_augmentations=[AVAILABLE_AUDIO_AUGMENTATIONS[audio_augmentation]() for audio_augmentation in
-                                 self.audio_augmentations],
-            spectrum_augmentations=[AVAILABLE_SPECTROGRAM_AUGMENTATIONS[spectrogram_augmentation]() for
-                                    spectrogram_augmentation in self.spectrogram_augmentations],
+            audio_augmentations=self.audio_augmentations,
+            spectrum_augmentations=self.spectrogram_augmentations,
             predefined_model=self.predefined_model,
         )
 
