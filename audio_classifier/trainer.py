@@ -95,11 +95,8 @@ class Trainer:
             batch_size: int = DEFAULT_BATCH_SIZE,
             epochs: int = DEFAULT_EPOCHS,
             checkpoints_folder: str = CHECKPOINTS_FOLDER,
-            model_id: str = "model"
+            model_id: str = "model_id"
     ) -> Tuple[tf.keras.Model, tf.keras.callbacks.History]:
-
-        if not model_id:
-            model_id = f"{int(time.time())}_{dataset.sample_rate}Hz_{dataset.window}w_{dataset.step}s"
 
         x, y = dataset.load()
 

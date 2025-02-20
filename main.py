@@ -1,6 +1,6 @@
+import datetime
 import json
 import os
-import time
 from typing import List
 import fire
 from matplotlib import pyplot as plt
@@ -15,7 +15,7 @@ TASK2MODEL = {
 }
 
 
-def plot_history(history):
+def plot_history(history, model_id):
     """
     Plots the history of the model training
     :param history: History object from keras
@@ -34,6 +34,7 @@ def plot_history(history):
     bx.set_ylabel('loss')
     bx.set_xlabel('epoch')
     bx.legend(['train', 'val'], loc='upper left')
+    plt.savefig(model_id + '.png')
     plt.show()
 
 
@@ -69,7 +70,7 @@ class Main:
             optimizer: str = "Adam",
             class_loader: str = "ClassLoaderFromFolderName",
             learning_rate: float = 0.001,
-            model_id: str = str(time.time()),
+            model_id: str = None,
             stft_nfft: int = DEFAULT_STFT_N_FFT,
             stft_win: int = DEFAULT_STFT_WIN,
             stft_hop: int = DEFAULT_STFT_HOP,
@@ -119,6 +120,9 @@ class Main:
             classes2avoid=classes2avoid,
             class_loader=class_loader
         )
+        if not model_id:
+            folder_name = folder.rsplit("/")[-1] if folder[-1] != "/" else folder.rsplit("/")[-2]
+            model_id = f"{folder_name}_{str(datetime.datetime.now())}_{sample_rate}Hz_{window}w_{step}s"
         model, history = trainer.train(
             dataset,
             val_size=0.2,
@@ -130,7 +134,7 @@ class Main:
         os.makedirs('histories', exist_ok=True)
         with open(f'histories/{model_id}.json', "w") as f:
             json.dump(history.history, f, default=str)
-        plot_history(history)
+        plot_history(history, model_id)
 
 
 if __name__ == '__main__':
