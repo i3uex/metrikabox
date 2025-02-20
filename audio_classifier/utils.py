@@ -2,6 +2,9 @@ from typing import Union
 from pydub import AudioSegment
 import numpy as np
 from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
+import logging
+
+LOGGER = logging.getLogger("audio_classifier")
 
 
 class Singleton(type):

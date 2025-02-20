@@ -1,6 +1,5 @@
 import json
 import os
-import time
 from typing import List, Tuple, Collection
 import tensorflow as tf
 from sklearn.utils import class_weight
@@ -13,6 +12,7 @@ from audio_classifier.model import AudioModelBuilder, DEFAULT_STFT_HOP, DEFAULT_
     DEFAULT_MEL_F_MIN
 from audio_classifier.constants import AVAILABLE_KERAS_MODELS, AVAILABLE_AUDIO_AUGMENTATIONS, AVAILABLE_SPECTROGRAM_AUGMENTATIONS, \
     AVAILABLE_KERAS_OPTIMIZERS
+from audio_classifier.utils import LOGGER
 
 
 def generate(x: Collection, y: Collection) -> callable:
@@ -145,7 +145,7 @@ class Trainer:
         checkpoint_filepath = f'{checkpoints_folder}/{model_id}.keras'
 
         # Perform training
-        print("Starting training")
+        LOGGER.info("Starting training")
         history = model.fit(
             train_dataset,
             validation_data=val_dataset,

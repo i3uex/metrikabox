@@ -4,6 +4,7 @@ from typing import Collection
 from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
 from audio_classifier.constants import AVAILABLE_CLASS_LOADERS
 from audio_classifier.loaders import ClassLoaderFromFolderName, FolderLoader
+from audio_classifier.utils import LOGGER
 
 
 class Dataset:
@@ -40,5 +41,5 @@ class Dataset:
         """
         x, y = self.data_loader.load(self.folder, classes2avoid=self.classes2avoid)
         assert len(y) == len(x)
-        print("Number of items per class:", Counter(y))
+        LOGGER.info(f"Number of items per class: {Counter(y)}")
         return x, y

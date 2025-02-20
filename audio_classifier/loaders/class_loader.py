@@ -2,6 +2,8 @@ import json
 import os
 from typing import Collection, Optional
 
+from audio_classifier.utils import LOGGER
+
 
 class ClassLoader:
     """
@@ -39,7 +41,7 @@ class ClassLoaderFromSameFileName(ClassLoader):
     def get_class(self, audio_file: str, num_items: int) -> Collection[Optional[str]]:
         json_file = audio_file.replace(".mp3", ".json")
         if not os.path.exists(json_file):
-            print(f"{json_file} NOT found")
+            LOGGER.warning(f"{json_file} NOT found. Using None as class.")
             return [None]*num_items
         with open(json_file) as f:
             classes = json.load(f)

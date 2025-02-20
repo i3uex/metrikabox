@@ -11,6 +11,7 @@ from tqdm import tqdm
 from audio_classifier.loaders.class_loader import ClassLoader
 from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
 from audio_classifier.loaders.file_loader import FileLoader
+from audio_classifier.utils import LOGGER
 
 BASE_PATH = ''
 
@@ -74,8 +75,8 @@ class FolderLoader:
                 for i, (af, future) in enumerate(zip(items, futures)):
                     try:
                         x = future.result()
-                    except Exception as e:
-                        print(f'Exception {type(e)} in file {items[i]}. Skipping')
+                    except Exception:
+                        LOGGER.exception(f'Error in file {items[i]}. Skipping')
                         continue
                     y = self.class_loader.get_class(af, x.shape[0])
                     filtered_data = list(filter(lambda _item: _item[1] not in classes2avoid, zip(x, y)))
@@ -84,7 +85,7 @@ class FolderLoader:
                         self.X.extend(x)
                         self.Y.extend(y)
                     pbar.update()
-        print("Shuffling dataset")
+        LOGGER.info("Shuffling dataset")
         seed = 42
         list2shuffle = list(zip(self.X, self.Y))
         random.Random(seed).shuffle(list2shuffle)

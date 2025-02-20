@@ -8,6 +8,7 @@ from audio_classifier import Dataset
 from audio_classifier import AudioClassifier, AudioSegmenter, Trainer
 from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_STEP, DEFAULT_WINDOW, CHECKPOINTS_FOLDER
 from audio_classifier.model.builder import DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, DEFAULT_MEL_F_MIN
+from audio_classifier.utils import LOGGER
 
 TASK2MODEL = {
     'classify': AudioClassifier,
@@ -48,7 +49,7 @@ class Main:
     ):
         if __name__ == '__main__':
             if task not in TASK2MODEL:
-                print(f"Task {task} is not supported. Supported tasks are {TASK2MODEL.keys()}")
+                LOGGER.error(f"Task {task} is not supported. Supported tasks are {TASK2MODEL.keys()}")
                 exit()
             model = TASK2MODEL[task](model_id)
             base_file_name = filename.split(".", 1)[0]
