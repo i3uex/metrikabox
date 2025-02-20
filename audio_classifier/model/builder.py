@@ -6,10 +6,10 @@ from keras.models import Sequential, Model
 from keras import layers
 import numpy as np
 
-from augmentations.AugmentationLayer import AudioAugmentationLayer, SpectrogramAugmentationLayer
-from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
-from loaders import FileLoader
-from model.classification import MNIST_convnet
+from audio_classifier.augmentations import AudioAugmentationLayer, SpectrogramAugmentationLayer
+from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
+from audio_classifier.loaders import FileLoader
+from audio_classifier.model.classification import MNIST_convnet
 
 # Tested for 1 step and 2 win @ 16000 Hz
 DEFAULT_STFT_HOP = 256

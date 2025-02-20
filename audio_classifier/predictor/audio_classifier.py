@@ -1,5 +1,5 @@
 import numpy as np
-from classes.predictor.audio_model import AudioModel
+from audio_classifier.predictor.audio_model import AudioModel
 
 
 class AudioClassifier(AudioModel):

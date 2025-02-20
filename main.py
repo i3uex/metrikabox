@@ -4,11 +4,10 @@ import time
 from typing import List
 import fire
 from matplotlib import pyplot as plt
-from classes.dataset import Dataset
-from classes import AudioClassifier, AudioSegmenter, Trainer
-from config import DEFAULT_SAMPLE_RATE, DEFAULT_STEP, DEFAULT_WINDOW, CHECKPOINTS_FOLDER
-from augmentations.AugmentationLayer import AudioAugmentationLayer, SpectrogramAugmentationLayer
-from model.builder import DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, DEFAULT_MEL_F_MIN
+from audio_classifier import Dataset
+from audio_classifier import AudioClassifier, AudioSegmenter, Trainer
+from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_STEP, DEFAULT_WINDOW, CHECKPOINTS_FOLDER
+from audio_classifier.model.builder import DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, DEFAULT_MEL_F_MIN
 
 TASK2MODEL = {
     'classify': AudioClassifier,

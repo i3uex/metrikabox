@@ -6,9 +6,9 @@ from multiprocessing import Lock
 from typing import Union
 import tensorflow as tf
 from pydub import AudioSegment
-from loaders import FileLoader
-from utils import Singleton
-from config import MODEL_CONFIG_FOLDER, CHECKPOINTS_FOLDER
+from audio_classifier.loaders import FileLoader
+from audio_classifier.utils import Singleton
+from audio_classifier.config import MODEL_CONFIG_FOLDER, CHECKPOINTS_FOLDER
 
 BATCH_SIZE = os.environ.get('CLASSIFIER_BATCH_SIZE', '128')
 try:

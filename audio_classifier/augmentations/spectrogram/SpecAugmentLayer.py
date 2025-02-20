@@ -1,4 +1,4 @@
-from augmentations.AugmentationLayer import SpectrogramAugmentationLayer
+from audio_classifier.augmentations.AugmentationLayer import SpectrogramAugmentationLayer
 import tensorflow as tf
 import keras.backend as K
 

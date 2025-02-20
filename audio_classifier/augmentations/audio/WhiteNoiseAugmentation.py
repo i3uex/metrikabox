@@ -1,7 +1,5 @@
-import numpy as np
 import tensorflow as tf
-from augmentations.AugmentationLayer import AudioAugmentationLayer
-from model.builder import NormLayer
+from audio_classifier.augmentations.AugmentationLayer import AudioAugmentationLayer
 
 
 class WhiteNoiseAugmentation(AudioAugmentationLayer):
@@ -54,7 +52,8 @@ class WhiteNoiseAugmentation(AudioAugmentationLayer):
 if __name__ == '__main__':
     import librosa
     import soundfile as sf
-    from loaders import FileLoader
+    from audio_classifier.loaders import FileLoader
+    from audio_classifier.model.builder import NormLayer
     SAMPLE_RATE = 16000
     audio = FileLoader(SAMPLE_RATE, 2, 1).load(librosa.util.example('brahms'))
     model = tf.keras.models.Sequential()

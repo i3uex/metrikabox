@@ -1,9 +1,9 @@
 from collections import Counter
 from typing import Collection
 
-from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
-from constants import AVAILABLE_CLASS_LOADERS
-from loaders import ClassLoaderFromFolderName, FolderLoader
+from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
+from audio_classifier.constants import AVAILABLE_CLASS_LOADERS
+from audio_classifier.loaders import ClassLoaderFromFolderName, FolderLoader
 
 
 class Dataset:

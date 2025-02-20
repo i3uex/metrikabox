@@ -6,13 +6,12 @@ import tensorflow as tf
 from sklearn.utils import class_weight
 from sklearn.preprocessing import LabelBinarizer
 
-from classes.dataset import Dataset
-from config import MODEL_CONFIG_FOLDER, DEFAULT_BATCH_SIZE, \
+from audio_classifier import Dataset
+from audio_classifier.config import MODEL_CONFIG_FOLDER, DEFAULT_BATCH_SIZE, \
     DEFAULT_EPOCHS, CHECKPOINTS_FOLDER
-from model.builder import AudioModelBuilder, DEFAULT_STFT_HOP, DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_N_MELS, \
+from audio_classifier.model import AudioModelBuilder, DEFAULT_STFT_HOP, DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_N_MELS, \
     DEFAULT_MEL_F_MIN
-from augmentations.AugmentationLayer import AudioAugmentationLayer, SpectrogramAugmentationLayer
-from constants import AVAILABLE_KERAS_MODELS, AVAILABLE_AUDIO_AUGMENTATIONS, AVAILABLE_SPECTROGRAM_AUGMENTATIONS, \
+from audio_classifier.constants import AVAILABLE_KERAS_MODELS, AVAILABLE_AUDIO_AUGMENTATIONS, AVAILABLE_SPECTROGRAM_AUGMENTATIONS, \
     AVAILABLE_KERAS_OPTIMIZERS
 
 

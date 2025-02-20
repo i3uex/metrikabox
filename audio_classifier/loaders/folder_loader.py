@@ -8,9 +8,9 @@ from typing import Tuple, Collection
 import numpy as np
 from tqdm import tqdm
 
-from loaders.class_loader import ClassLoader
-from config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
-from loaders.file_loader import FileLoader
+from audio_classifier.loaders.class_loader import ClassLoader
+from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
+from audio_classifier.loaders.file_loader import FileLoader
 
 BASE_PATH = ''
 

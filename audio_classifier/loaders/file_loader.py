@@ -1,7 +1,7 @@
 from typing import Union
 import numpy as np
 from pydub import AudioSegment
-from utils import apply_window, load_audio
+from audio_classifier.utils import apply_window, load_audio
 
 
 class FileLoader:
