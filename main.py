@@ -6,7 +6,8 @@ import fire
 from matplotlib import pyplot as plt
 from audio_classifier import Dataset
 from audio_classifier import AudioClassifier, AudioSegmenter, Trainer
-from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_STEP, DEFAULT_WINDOW, CHECKPOINTS_FOLDER, MODEL_CONFIG_FOLDER
+from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_STEP, DEFAULT_WINDOW, CHECKPOINTS_FOLDER, \
+    MODEL_CONFIG_FOLDER, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS
 from audio_classifier.model.builder import DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, DEFAULT_MEL_F_MIN
 from audio_classifier.utils import LOGGER
 
@@ -83,7 +84,9 @@ class Main:
             mel_f_min: int = DEFAULT_MEL_F_MIN,
             model: str = None,
             audio_augmentations: List[str] = (),
-            spectrogram_augmentations: List[str] = ()
+            spectrogram_augmentations: List[str] = (),
+            epochs=DEFAULT_EPOCHS,
+            batch_size=DEFAULT_BATCH_SIZE,
     ):
         """
         Trains the model
@@ -105,6 +108,8 @@ class Main:
         :param model: Name of the predefined model to use. Any of keras.applications
         :param audio_augmentations: List of audio augmentations to use
         :param spectrogram_augmentations: List of spectrogram augmentations to use
+        :param batch_size: Batch size for the training
+        :param epochs: Number of epochs to train
         :return:
         """
         trainer = Trainer(
@@ -128,13 +133,15 @@ class Main:
         if not model_id:
             folder_name = folder.rsplit("/")[-1] if folder[-1] != "/" else folder.rsplit("/")[-2]
             model_id = f"{folder_name}_{str(datetime.datetime.now())}_{sample_rate}Hz_{window}w_{step}s"
-        model, history = trainer.train(
+        checkpoint_filepath, model_config_path, history = trainer.train(
             dataset,
             val_size=0.2,
             optimizer=optimizer,
             learning_rate=learning_rate,
             checkpoints_folder=checkpoints_folder,
             model_id=model_id,
+            batch_size=batch_size,
+            epochs=epochs
         )
         os.makedirs('histories', exist_ok=True)
         with open(f'histories/{model_id}.json', "w") as f:
