@@ -4,7 +4,7 @@ import os
 import gradio as gr
 from audio_classifier import Trainer, Dataset
 from audio_classifier.config import DEFAULT_SAMPLE_RATE, CHECKPOINTS_FOLDER, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS
-from audio_classifier.constants import AVAILABLE_KERAS_OPTIMIZERS, AVAILABLE_CLASS_LOADERS, AVAILABLE_KERAS_MODELS, \
+from audio_classifier.constants import AVAILABLE_KERAS_OPTIMIZERS, AVAILABLE_CLASS_LOADERS, AVAILABLE_MODELS, \
     AVAILABLE_AUDIO_AUGMENTATIONS, AVAILABLE_SPECTROGRAM_AUGMENTATIONS
 from audio_classifier.model import DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, \
     DEFAULT_MEL_F_MIN
@@ -88,7 +88,7 @@ def train(
     os.makedirs('histories', exist_ok=True)
     with open(f'histories/{model_id}.json', "w") as f:
         json.dump(history.history, f, default=str)
-    return model_checkpoints, model_config_path
+    return model_checkpoints, model_config_path, history.history
 
 
 with gr.Blocks() as demo:
@@ -97,11 +97,13 @@ with gr.Blocks() as demo:
     with gr.Row():
         with gr.Column():
             inp.append(gr.Textbox(placeholder="/path/to/dataset", label="Dataset Path"))
-            inp.append(gr.Dropdown(choices=AVAILABLE_KERAS_MODELS, value="MobileNetV2", label="Model to train"))  # model
-        out = [
-            gr.File(label="Model checkpoints"),
-            gr.File(label="Model config")
-        ]
+            inp.append(gr.Dropdown(choices=AVAILABLE_MODELS, value="custom.MNIST_convnet", label="Model to train"))  # model
+        with gr.Column():
+            out = [
+                gr.File(label="Model checkpoints"),
+                gr.File(label="Model config"),
+                gr.File(label="Train history")
+            ]
     with gr.Accordion("Aditional training params", open=False):
         inp.extend([
             gr.Dropdown(

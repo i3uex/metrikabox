@@ -10,7 +10,7 @@ from audio_classifier.config import MODEL_CONFIG_FOLDER, DEFAULT_BATCH_SIZE, \
     DEFAULT_EPOCHS, CHECKPOINTS_FOLDER
 from audio_classifier.model import AudioModelBuilder, DEFAULT_STFT_HOP, DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_N_MELS, \
     DEFAULT_MEL_F_MIN
-from audio_classifier.constants import AVAILABLE_KERAS_MODELS, AVAILABLE_AUDIO_AUGMENTATIONS, AVAILABLE_SPECTROGRAM_AUGMENTATIONS, \
+from audio_classifier.constants import AVAILABLE_MODELS, AVAILABLE_AUDIO_AUGMENTATIONS, AVAILABLE_SPECTROGRAM_AUGMENTATIONS, \
     AVAILABLE_KERAS_OPTIMIZERS
 from audio_classifier.utils import LOGGER
 
@@ -53,7 +53,7 @@ class Trainer:
         }
         self.predefined_model = None
         if predefined_model:
-            self.predefined_model = AVAILABLE_KERAS_MODELS[predefined_model](
+            self.predefined_model = AVAILABLE_MODELS[predefined_model](
                 include_top=False,
                 pooling='avg',
                 weights=None
