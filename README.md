@@ -1,138 +1,134 @@
 # MetrikaBox
 
-Este framework permite procesar un conjunto de datos de audio para tareas de clasificación utilizando modelos de `keras`. Puedes configurar los parámetros de procesamiento a través de argumentos de línea de comandos, los cuales se describen a continuación.
-
+This framework allows you to process an audio dataset for classification tasks using `keras` models. You can configure the processing parameters through command line arguments, which are described below.
 
 ## 1. Install
 
-### 1.1 Clona el repositorio:
+### 1.1 CLone the repository:
 
 ```bash
-git clone https://github.com/usuario/nombre_repositorio.git
-cd nombre_repositorio
+git clone https://github.com/i3uex/metrikabox
+cd metrikabox
 ```
-### 1.2 (Opcional) Crea y activa un entorno virtual:
+### 1.2 (Optional) Create and activate a virtual environment:
 ```bash
 python3 -m venv venv
 source venv/bin/activate  # En Windows usa: venv\Scripts\activate
 ```
-### o con `conda`:
+### or using `conda`:
 ```bash
 conda create --name metrikabox python=3.11 --yes
 conda activate metrikabox
 ```
 
-### 1.3 Instala las dependencias:
+### 1.3 Install the dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-## 2.Uso con Gradio
-### 2.1 Entrenamiento de modelos de clasificación de audio
+## 2. Usage with Gradio
+### 2.1 Training audio classification models
 
-Para ejecutar la interfaz de entrenamiento de modelos de clasificación de audio, ejecuta el script `demo_train.py` con la siguiente sintaxis:
+In order to run the audio classification models training interface, run the `demo_train.py` script with the following syntax:
 
 ```bash
 python3 demo_train.py
 ```
-### 2.2 Predicción con modelos de clasificación de audio entrenados
-
-Para ejecutar la interfaz de predicción con de clasificación de audio entrenados, ejecuta el script `demo_predict.py` con la siguiente sintaxis:
-
+### 2.2 Prediction with trained audio classification models
+In order to run the prediction interface with trained audio classification, run the `demo_predict.py` script with the following syntax:
 ```bash
 python3 demo_predict.py
 ```
 
-## 3. Uso con argumentos de línea de comandos
-### 3.1 Entrenamiento de modelos de clasificación de audio
-Para ejecutar el script con argumentos de línea de comandos, utiliza la siguiente sintaxis:
+## 3. Usage with command line arguments
+### 3.1 Training audio classification models
+In order to run the script with command line arguments, use the following syntax:
 ```bash
 python main.py train /path/to/dataset
 ```
 
+#### 3.1.1 Mandatory arguments
+- `folder`: Path to the directory containing the audio files to process.
 
-#### 3.1.1 Argumentos Obligatorios
-- `folder`: Ruta al directorio que contiene los archivos de audio a procesar.
+#### 3.1.2 Optional arguments
 
-#### 3.1.2 Argumentos Opcionales
-
-__- `--sample_rate`: Tasa de muestreo a la que se convertirán los audios. Este valor debe ser un número entero.
+__- `--sample_rate`: Sample rate to which the audios will be converted. This value must be an integer.
 (Default: 22050)
 
-- `--window`: Tiempo en segundos que se procesará como un solo elemento. Este valor debe ser un número decimal.
+- `--window`: Time in seconds to be processed as a single element. This value must be a decimal number.
 (Default: 2)
 
-- `--step`: Tiempo en segundos para saltar entre ventanas. Se recomienda que sea como máximo la mitad de - `window para asegurar solapamiento y no perder información.
+- `--step`: Time in seconds to jump between windows. It is recommended that it be at most half of - `window to ensure overlap and not lose information.
 (Default: 1)
 
-- `--classes2avoid`: Lista de clases a evitar en el conjunto de datos (estas clases no serán cargadas).
+- `--classes2avoid`: List of classes to avoid in the dataset (these classes will not be loaded).
 
-- `--checkpoints_folder`: Ruta al directorio donde se guardarán los puntos de control del modelo.
+- `--checkpoints_folder`: Path to the directory where the model checkpoints will be saved.
 
-- `--optimizer`: Especifica el optimizador de keras.optimizers a utilizar para el entrenamiento del modelo.
+- `--optimizer`: Optimizer from keras.optimizers to use for model training.
 (Default: Adam)
 (Available options: Any of https://keras.io/api/optimizers/))
 
-- `--class_loader`: Clase de cargador de clases a utilizar.
-(Default: Cargar clases desde el nombre de la carpeta con los archivos de audio)
-(Available options: Cargar clases desde el nombre de la carpeta con los archivos de audio)
+- `--class_loader`: Loader class to use.
+(Default: Load classes from the folder name with the audio files)
+(Available options: Load classes from the folder name with the audio files)
 
-- `--learning_rate`: Tasa de aprendizaje para el optimizador. Este valor debe ser un número decimal.
+- `--learning_rate`: Learning rate for the optimizer. This value must be a decimal number.
 (Default: 0.001)
 
-- `--model_id`: ID del modelo a utilizar (Default: A combination of the Current time, the configured sample rate and the processing window and step separated by _).
+- `--model_id`: ID of the model to use 
+(Default: A combination of the Current time, the configured sample rate and the processing window and step separated by _).
 
-- `--stft_nfft`: Longitud de la ventana FFT. Este valor debe ser un número entero.
+- `--stft_nfft`: Length of the FFT window. This value must be an integer.
 (Default: 1024)
 
-- `--stft_win`: Longitud de la ventana para cada cuadro de audio antes de aplicar el relleno para coincidir con stft_nfft.
+- `--stft_win`: Length of the window for each audio frame before padding to match stft_nfft.
 (Default: 1024)
 
-- `--stft_hop`: Número de muestras entre cuadros sucesivos.
+- `--stft_hop`: Number of samples between successive frames.
 (Default: 256)
 
-- `--stft_nmels`: Número de bandas Mel a generar.
+- `--stft_nmels`: Number of Mel bands to generate.
 (Default: 128)
 
-- `--mel_f_min`: Frecuencia más baja de la banda de filtro Mel.
+- `--mel_f_min`: Lowest frequency of the Mel filter band.
 (Default: 0)
 
-- `--model`: Especifica el modelo de keras.applications a utilizar para la clasificación.
+- `--model`: Specifies the keras.applications model to use for classification.
 (Default: MNIST (https://keras.io/examples/vision/mnist_convnet/))
 (Available options: Any of https://keras.io/api/applications/)
 
-- `--audio_augmentations`: Lista de aumentaciones de audio a aplicar. Si no se especifica ninguna, no se utilizarán aumentaciones.
+- `--audio_augmentations`: List of audio augmentations to apply. If none are specified, no augmentations will be used.
 (Default: None)
 (Available options: `WhiteNoiseAugmentation`)
 
-- `--spectrogram_augmentations`: Lista de aumentaciones de espectrogramas a aplicar. Si no se especifica ninguna, no se utilizarán aumentaciones.
+- `--spectrogram_augmentations`: List of spectrogram augmentations to apply. If none are specified, no augmentations will be used.
 (Default: None)
 (Available options: `SpecAugmentation`)
 
-- `--batch_size`: Tamaño del lote para el entrenamiento del modelo.
+- `--batch_size`: Size of the batch for model training.
 
-- `--epochs`: Número de épocas para entrenar el modelo.
+- `--epochs`: Number of epochs to train the model.
 
 
-#### 3.1.3 Ejemplo avanzado de uso
+#### 3.1.3 Advanced usage
 
 ```bash 
-python script.py data/ --model_id "my_model" -sr 16000 --window 2 --step 1 --batch_size 32 --epochs 10 --learning_rate 0.001 --audio_augmentations WhiteNoiseAugmentation
+python script.py /path/to/dataset/ --model_id "my_model" -sr 16000 --window 2 --step 1 --batch_size 32 --epochs 10 --learning_rate 0.001 --audio_augmentations WhiteNoiseAugmentation
 ```
-Este comando ejecutará el script sobre el conjunto de datos en la carpeta data/, especificando una serie de parámetros para el modelo, la tasa de muestreo, el tamaño de ventana y otras configuraciones de procesamiento.
+The command will run the script on the dataset in the data/ folder, specifying a series of parameters for the model, the sample rate, the window size, and other processing configurations.
 
-
-### 3.2 Predicción con modelos de clasificación de audio entrenados
-Para ejecutar el script con argumentos de línea de comandos, utiliza la siguiente sintaxis:
+### 3.2 Prediction with trained audio classification models
+In order to run the script with command line arguments, use the following syntax:
 ```bash
 python main.py predict /path/to/file /path/to/model  
 ```
-#### 3.2.1 Argumentos obligatorios
-- `file`: Ruta al archivo de audio a clasificar.
-- `model`: Ruta al modelo entrenado a utilizar para la clasificación.
+#### 3.2.1 Mandatory arguments
+- `file`: Path to the audio file to process.
+- `model`: Path to the model to use for prediction.
 
-#### 3.2.2 Argumentos opcionales
-- `--model_config_path`: Ruta al archivo de configuración del modelo.
-- `--task`: Task a realizar (classify o segment).
+#### 3.2.2 Optional arguments
+- `--model_config_path`: Path to the model configuration file.
+- `--task`: Task to perform with the model (classify o segment). Default: segment
 
 
