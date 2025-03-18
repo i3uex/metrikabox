@@ -56,6 +56,8 @@ class FolderLoader:
         """
         if self.X or self.Y:
             return self.X, self.Y
+        if not folder.endswith("/"):
+            folder += "/"
         items = list(
             filter(
                 lambda item: not os.path.isdir(item) and (
