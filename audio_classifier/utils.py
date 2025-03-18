@@ -1,4 +1,5 @@
 from typing import Union
+import soxr
 from pydub import AudioSegment
 import numpy as np
 from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
@@ -50,7 +51,10 @@ def load_audio(audio: Union[str, np.ndarray, AudioSegment], sr: int = 16000, max
     if type(audio) is str:
         audio = AudioSegment.from_file(audio, duration=max_duration)
     if type(audio) is AudioSegment:
-        audio = audio.set_channels(1).set_frame_rate(sr).set_sample_width(2).get_array_of_samples()
+        frame_rate = audio.frame_rate
+        audio = audio.set_channels(1).set_sample_width(2).get_array_of_samples()
+        if frame_rate != sr:
+            audio = soxr.resample(audio, frame_rate, sr)
     return audio
 
 
