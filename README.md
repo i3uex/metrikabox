@@ -44,7 +44,7 @@ python3 demo_predict.py
 ### 3.1 Training audio classification models
 In order to run the script with command line arguments, use the following syntax:
 ```bash
-python main.py train /path/to/dataset
+python3 main.py train /path/to/dataset
 ```
 
 #### 3.1.1 Mandatory arguments
@@ -114,14 +114,14 @@ __- `--sample_rate`: Sample rate to which the audios will be converted. This val
 #### 3.1.3 Advanced usage
 
 ```bash 
-python script.py /path/to/dataset/ --model_id "my_model" -sr 16000 --window 2 --step 1 --batch_size 32 --epochs 10 --learning_rate 0.001 --audio_augmentations WhiteNoiseAugmentation
+python3 main.py train /path/to/dataset/ --model_id "my_model" -sr 16000 --window 2 --step 1 --batch_size 32 --epochs 10 --learning_rate 0.001 --audio_augmentations WhiteNoiseAugmentation
 ```
 The command will run the script on the dataset in the data/ folder, specifying a series of parameters for the model, the sample rate, the window size, and other processing configurations.
 
 ### 3.2 Prediction with trained audio classification models
 In order to run the script with command line arguments, use the following syntax:
 ```bash
-python main.py predict /path/to/file /path/to/model  
+python3 main.py predict /path/to/file /path/to/model  
 ```
 #### 3.2.1 Mandatory arguments
 - `file`: Path to the audio file to process.
