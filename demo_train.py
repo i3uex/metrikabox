@@ -75,7 +75,7 @@ def train(
     if not model_id:
         folder_name = folder.rsplit("/")[-1] if folder[-1] != "/" else folder.rsplit("/")[-2]
         model_id = f"{folder_name}_{str(datetime.datetime.now())}_{sample_rate}Hz_{window}w_{step}s"
-    model, history = trainer.train(
+    model_checkpoints, model_config_path, history = trainer.train(
         dataset,
         val_size=0.2,
         optimizer=optimizer,
@@ -88,17 +88,20 @@ def train(
     os.makedirs('histories', exist_ok=True)
     with open(f'histories/{model_id}.json', "w") as f:
         json.dump(history.history, f, default=str)
-    return model_id, f'histories/{model_id}.json'
+    return model_checkpoints, model_config_path
 
 
 with gr.Blocks() as demo:
-    gr.Markdown("Start typing below and then click **Run** to see the output.")
+    gr.Markdown("Start typing below and then click **Train** to see the output.")
     inp = []
     with gr.Row():
         with gr.Column():
             inp.append(gr.Textbox(placeholder="/path/to/dataset", label="Dataset Path"))
             inp.append(gr.Dropdown(choices=AVAILABLE_KERAS_MODELS, value="MobileNetV2", label="Model to train"))  # model
-        out = gr.Textbox()
+        out = [
+            gr.File(label="Model checkpoints"),
+            gr.File(label="Model config")
+        ]
     with gr.Accordion("Aditional training params", open=False):
         inp.extend([
             gr.Dropdown(

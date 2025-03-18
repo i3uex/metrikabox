@@ -26,8 +26,10 @@ def _generate(x: Collection, y: Collection) -> callable:
 def _dump_model_config(model_id: str, model_config: dict, checkpoints_folder: str = CHECKPOINTS_FOLDER):
     model_id_config_folder = f'{checkpoints_folder}/{MODEL_CONFIG_FOLDER}/{model_id}'
     os.makedirs(model_id_config_folder, exist_ok=True)
-    with open(f'{model_id_config_folder}/model-config.json', "w") as f:
+    model_config_file_path = f'{model_id_config_folder}/model-config.json'
+    with open(model_config_file_path, "w") as f:
         json.dump(model_config, f)
+    return model_config_file_path
 
 
 class Trainer:
@@ -91,7 +93,7 @@ class Trainer:
             epochs: int = DEFAULT_EPOCHS,
             checkpoints_folder: str = CHECKPOINTS_FOLDER,
             model_id: str = "model_id"
-    ) -> Tuple[tf.keras.Model, tf.keras.callbacks.History]:
+    ) -> Tuple[str, str, tf.keras.callbacks.History]:
 
         x, y = dataset.load()
 
@@ -106,7 +108,7 @@ class Trainer:
             "step": dataset.step,
             "classes": encoder.classes_.tolist()
         })
-        _dump_model_config(model_id, model_config)
+        model_config_path = _dump_model_config(model_id, model_config)
         model = self._get_model(model_config)
 
         # Prepare model optimizer
@@ -174,4 +176,4 @@ class Trainer:
               )
             ]
         )
-        return model, history
+        return checkpoint_filepath, model_config_path, history
