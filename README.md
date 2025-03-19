@@ -62,17 +62,21 @@ python3 demo_predict.py
 
 ## 3. Usage with command line arguments
 
+You can download two example datasets (GTZAN Speech&Music classification and GTZAN Genres classification) by running the script `download_datasets.sh`:
+
 ### 3.1 Training audio classification models
 
 In order to run the script with command line arguments, use the following syntax:
 
 ```bash
-python3 main.py train /path/to/dataset
+python3 main.py train "datasets/GTZAN Speech_Music"
 ```
+
+This will train a model using the GTZAN Speech&Music classification dataset, that will be capable of classifying audio files into two classes: "Speech" and "Music".
 
 #### 3.1.1 Mandatory arguments
 
-- `folder`: Path to the directory containing the audio files to process.
+- `folder`: Path to the directory containing the folders with the class labels. Each folder must contain the audio files of a single class. 
 
 #### 3.1.2 Optional arguments
 
@@ -137,18 +141,24 @@ python3 main.py train /path/to/dataset
 
 #### 3.1.3 Advanced usage
 
+In this case we will train a classification model using the GTZAN Genres classification dataset running the following command:
+
 ```bash 
-python3 main.py train /path/to/dataset/ --model_id "my_model" -sr 16000 --window 2 --step 1 --batch_size 32 --epochs 10 --learning_rate 0.001 --audio_augmentations WhiteNoiseAugmentation
+python3 main.py train "datasets/GTZAN Genre/Data/genres_original" --model keras.MobileNetV2 --model_id "GTZAN_Genres" -sr 16000 --window 5 --step 2.5 --batch_size 32 --epochs 100 --learning_rate 0.001 --audio_augmentations [WhiteNoiseAugmentation]
 ```
 
-The command will run the script on the dataset in the data/ folder, specifying a series of parameters for the model, the sample rate, the window size, and other processing configurations.
+This model will be capable of classifying audio files into 10 different music genres. In this case we use the folder containing the 10 subfolders, each one containing audio files of a different genre.
+
+The command will run the script on the dataset in the genres_original/ folder, specifying a series of parameters for the model, the sample rate, the window size, and other processing configurations.
 
 ### 3.2 Prediction with trained audio classification models
+
+You can download four example audio files (taken from librosa repository) by running the script `download_samples.sh`:
 
 In order to run the script with command line arguments, use the following syntax:
 
 ```bash
-python3 main.py predict /path/to/file /path/to/model  
+python3 main.py predict samples/audio2.ogg checkpoints/GTZAN_Genres.keras checkpoints/model_config/GTZAN_Genres/model-config.json
 ```
 
 #### 3.2.1 Mandatory arguments
