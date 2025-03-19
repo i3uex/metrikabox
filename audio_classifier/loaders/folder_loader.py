@@ -88,8 +88,7 @@ class FolderLoader:
                         self.Y.extend(y)
                     pbar.update()
         LOGGER.info("Shuffling dataset")
-        seed = 42
         list2shuffle = list(zip(self.X, self.Y))
-        random.Random(seed).shuffle(list2shuffle)
+        random.Random().shuffle(list2shuffle)
         self.X, self.Y = zip(*list2shuffle)
         return self.X, self.Y
