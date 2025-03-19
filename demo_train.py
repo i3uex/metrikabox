@@ -162,7 +162,7 @@ with gr.Blocks() as demo:
                 info="Learning rate for the optimizer",
                 minimum=1.e-6,
                 maximum=0.1,
-                value=0.01
+                value=0.001
             ),  # learning_rate
             gr.Text(
                 label="Model ID",
