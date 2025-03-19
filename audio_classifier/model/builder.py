@@ -29,6 +29,9 @@ class NormLayer(keras.layers.Layer):
             return tf.math.scalar_mul(scale, tf.cast(x, dtype=tf.float32))
         return x
 
+    def get_config(self):
+        return super().get_config()
+
 
 def get_classification_model(
         num_classes: int,
