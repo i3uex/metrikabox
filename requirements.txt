@@ -1,4 +1,4 @@
-pydub>=0.25.1
+pydub==0.25.1
 numpy<2
 scikit-learn==1.5.2
 matplotlib==3.9.2
