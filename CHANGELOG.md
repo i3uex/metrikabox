@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- *.gitignore* file for PyCharm from [gitignore.io][gitignore.io].
+- **project_environment.yml** to reproduce the miniconda virtual environment.
+- **.gitignore** file for PyCharm from [gitignore.io][gitignore.io].
 
 [gitignore.io]: https://gitignore.io "Create useful .gitignore files for your project"
