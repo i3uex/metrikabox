@@ -86,9 +86,10 @@ def train(
         model_id=model_id,
     )
     os.makedirs('histories', exist_ok=True)
-    with open(f'histories/{model_id}.json', "w") as f:
+    history_path = f'histories/{model_id}.json'
+    with open(history_path, "w") as f:
         json.dump(history.history, f, default=str)
-    return model_checkpoints, model_config_path, history.history
+    return [model_checkpoints, model_config_path, history_path]
 
 
 with gr.Blocks() as demo:
@@ -100,10 +101,9 @@ with gr.Blocks() as demo:
             inp.append(gr.Dropdown(choices=AVAILABLE_MODELS, value="custom.MNIST_convnet", label="Model to train"))  # model
         with gr.Column():
             out = [
-                gr.File(label="Model checkpoints"),
-                gr.File(label="Model config"),
-                gr.File(label="Train history")
+                gr.File(label="Model")
             ]
+    btn = gr.Button("Train")
     with gr.Accordion("Aditional training params", open=False):
         inp.extend([
             gr.Dropdown(
@@ -160,7 +160,7 @@ with gr.Blocks() as demo:
             gr.Slider(
                 label="Learning rate",
                 info="Learning rate for the optimizer",
-                minimum=1.e-5,
+                minimum=1.e-6,
                 maximum=0.1,
                 value=0.01
             ),  # learning_rate
@@ -206,7 +206,6 @@ with gr.Blocks() as demo:
                 multiselect=True
             ),  # spectrogram_augmentations
         ])
-    btn = gr.Button("Train")
     btn.click(fn=train, inputs=inp, outputs=out)
 
 demo.launch()
