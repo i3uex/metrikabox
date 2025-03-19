@@ -1,4 +1,3 @@
-#!/bin/bash
 mkdir -p datasets
 
 function download_speech_music_dataset {
