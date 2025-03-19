@@ -2,8 +2,7 @@ from typing import List, Union
 
 from pydub import AudioSegment
 import tensorflow as tf
-from keras.models import Sequential, Model
-from keras import layers
+import keras
 import numpy as np
 
 from audio_classifier.augmentations import AudioAugmentationLayer, SpectrogramAugmentationLayer
@@ -20,7 +19,8 @@ DEFAULT_N_MELS = 128
 DEFAULT_PREDEFINED_MODEL = MNIST_convnet()
 
 
-class NormLayer(layers.Layer):
+@keras.saving.register_keras_serializable()
+class NormLayer(keras.layers.Layer):
 
     def call(self, x, training=None, **kwargs):
         if x.dtype.is_integer:
@@ -33,8 +33,8 @@ class NormLayer(layers.Layer):
 def get_classification_model(
         num_classes: int,
         input_shape: tuple,
-        predefined_model: Model = DEFAULT_PREDEFINED_MODEL
-) -> Model:
+        predefined_model: keras.models.Model = DEFAULT_PREDEFINED_MODEL
+) -> keras.models.Model:
     """
     Get a classification model
     :param input_shape: Tuple of ints with the input shape
@@ -42,16 +42,15 @@ def get_classification_model(
     :param predefined_model: Model to use as base for the classification model
     :return: Classification model
     """
-    input_tensor = layers.Input(shape=input_shape)
-    convolution_layer = layers.Conv2D(3, (3, 3), padding='same')(
-        input_tensor)  # X has a dimension of (IMG_SIZE,N_MELS,3)
+    input_tensor = keras.layers.Input(shape=input_shape)
+    convolution_layer = keras.layers.Conv2D(3, 1, padding='same')(input_tensor)  # X has a dimension of (IMG_SIZE,N_MELS,3)
     base_model = predefined_model
     for layer in base_model.layers:
         layer.trainable = True  # trainable has to be false in order to freeze the layers
     base_model = base_model(convolution_layer)
-    output_tensor = layers.Dense(num_classes if num_classes > 2 else 1,
+    output_tensor = keras.layers.Dense(num_classes if num_classes > 2 else 1,
                                  activation='softmax' if num_classes > 2 else 'sigmoid')(base_model)
-    return Model(inputs=input_tensor, outputs=output_tensor)
+    return keras.models.Model(inputs=input_tensor, outputs=output_tensor)
 
 
 class AudioModelBuilder:
@@ -91,28 +90,28 @@ class AudioModelBuilder:
         self.stft_nmels = stft_nmels
         self.file_loader = FileLoader(sample_rate=self.sample_rate, window=self.window, step=self.step)
 
-    def get_melspectrogram(self) -> Model:
+    def get_melspectrogram(self) -> keras.Layer:
         """
         Get a melspectrogram layer
         :return: Layer to predict melspectrograms
         """
-        return layers.MelSpectrogram(
+        return keras.layers.MelSpectrogram(
             fft_length=self.stft_nfft,
             sequence_length=self.stft_window,
             sequence_stride=self.stft_hop,
             num_mel_bins=self.stft_nmels,
             sampling_rate=self.sample_rate,
             min_freq=self.mel_f_min,
-            power_to_db=True
+            power_to_db=False
         )
 
     def get_model(
             self,
             num_classes: int,
-            predefined_model: Model = None,
+            predefined_model: keras.models.Model = None,
             audio_augmentations: List[AudioAugmentationLayer] = (),
             spectrum_augmentations: List[SpectrogramAugmentationLayer] = ()
-        ) -> Model:
+        ) -> keras.models.Model:
         """
         Get a model
         :param num_classes: number of classes to predict
@@ -123,14 +122,14 @@ class AudioModelBuilder:
         """
         if not predefined_model:
             predefined_model = DEFAULT_PREDEFINED_MODEL
-        model = Sequential()
+        model = keras.models.Sequential()
         model.add(NormLayer())
         for augment in audio_augmentations:
             model.add(augment)
         melspectrogram_layer = self.get_melspectrogram()
         model.add(melspectrogram_layer)
         input_shape = (*melspectrogram_layer.compute_output_shape((int(self.sample_rate * self.window),)), 1)
-        model.add(layers.Reshape(input_shape))
+        model.add(keras.layers.Reshape(input_shape))
         for augment in spectrum_augmentations:
             model.add(augment)
         model.add(
@@ -157,7 +156,7 @@ if __name__ == '__main__':
     # Create model builder
     builder = AudioModelBuilder(sample_rate=sample_rate, window=window, step=step)
 
-    model = Sequential()
+    model = keras.models.Sequential()
     # Normalize int16 to float32
     model.add(NormLayer())
     # Get melspectrogram layer from builder
