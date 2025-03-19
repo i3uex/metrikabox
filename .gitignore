@@ -128,3 +128,4 @@ checkpoints/
 *.png
 env/
 venv/
+datasets/
