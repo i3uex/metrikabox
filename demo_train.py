@@ -98,7 +98,7 @@ with gr.Blocks() as demo:
     with gr.Row():
         with gr.Column():
             inp.append(gr.Textbox(placeholder="/path/to/dataset", label="Dataset Path"))
-            inp.append(gr.Dropdown(choices=AVAILABLE_MODELS, value="custom.MNIST_convnet", label="Model to train"))  # model
+            inp.append(gr.Dropdown(choices=sorted(AVAILABLE_MODELS.keys()), value="custom.MNIST_convnet", label="Model to train"))  # model
         with gr.Column():
             out = [
                 gr.File(label="Model")
@@ -138,7 +138,7 @@ with gr.Blocks() as demo:
             gr.Dropdown(
                 label="Optimizer",
                 info="Optimizer to be used in training",
-                choices=AVAILABLE_KERAS_OPTIMIZERS,
+                choices=sorted(AVAILABLE_KERAS_OPTIMIZERS.keys()),
                 value="Adam"
             ),  # optimizer
             gr.Number(
@@ -154,7 +154,7 @@ with gr.Blocks() as demo:
             gr.Dropdown(
                 label="Class loader",
                 info="Class loader to use for the dataset",
-                choices=AVAILABLE_CLASS_LOADERS,
+                choices=sorted(AVAILABLE_CLASS_LOADERS.keys()),
                 value="ClassLoaderFromFolderName"
             ),  # class_loader
             gr.Slider(
@@ -197,12 +197,12 @@ with gr.Blocks() as demo:
             gr.Dropdown(
                 label="Audio augmentations",
                 info="List of audio augmentations to use",
-                choices=AVAILABLE_AUDIO_AUGMENTATIONS,
+                choices=sorted(AVAILABLE_AUDIO_AUGMENTATIONS.keys()),
                 multiselect=True
             ),  # audio_augmentations
             gr.Dropdown(
                 label="Spectrogram augmentations",
-                choices=AVAILABLE_SPECTROGRAM_AUGMENTATIONS,
+                choices=sorted(AVAILABLE_SPECTROGRAM_AUGMENTATIONS.keys()),
                 multiselect=True
             ),  # spectrogram_augmentations
         ])
