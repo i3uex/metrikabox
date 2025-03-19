@@ -9,6 +9,7 @@ function download_speech_music_dataset {
     rm gtzan-musicspeech-collection.zip
     mv datasets/GTZAN\ Speech_Music/speech_wav datasets/GTZAN\ Speech_Music/speech
     mv datasets/GTZAN\ Speech_Music/music_wav datasets/GTZAN\ Speech_Music/music
+    rm -r datasets/GTZAN\ Speech_Music/dataset
   else
     echo "$DIRECTORY already exists."
   fi
