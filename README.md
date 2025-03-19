@@ -35,6 +35,13 @@ conda activate metrikabox
 pip install -r requirements.txt
 ```
 
+### 1.4 Install FFmpeg:
+
+To install FFmpeg, run the following command:
+```bash
+sudo apt install ffmpeg
+```
+
 ## 2. Usage with Gradio
 
 ### 2.1 Training audio classification models
