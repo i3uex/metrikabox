@@ -1,6 +1,10 @@
 # MetrikaBox
 
-This framework allows you to process an audio dataset for classification tasks using `keras` models. You can configure the processing parameters through command line arguments, which are described below.
+MetrikaBox is an open framework for experimenting with audio classification. 
+
+This framework allows you to process an audio dataset for classification tasks using [Keras][keras] models. You can configure the processing parameters through command line arguments, which are described below.
+
+[keras]: https://keras.io/ "The purpose of Keras is to give an unfair advantage to any developer looking to ship Machine Learning-powered apps"
 
 ## 1. Install
 
