@@ -4,29 +4,35 @@ This framework allows you to process an audio dataset for classification tasks u
 
 ## 1. Install
 
-### 1.1 CLone the repository:
+### 1.1 Clone the repository:
 
 ```bash
 git clone https://github.com/i3uex/metrikabox
 cd metrikabox
 ```
+
 ### 1.2 (Optional) Create and activate a virtual environment:
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate  # En Windows usa: venv\Scripts\activate
 ```
+
 ### or using `conda`:
+
 ```bash
 conda create --name metrikabox python=3.11 --yes
 conda activate metrikabox
 ```
 
 ### 1.3 Install the dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ## 2. Usage with Gradio
+
 ### 2.1 Training audio classification models
 
 In order to run the audio classification models training interface, run the `demo_train.py` script with the following syntax:
@@ -34,25 +40,32 @@ In order to run the audio classification models training interface, run the `dem
 ```bash
 python3 demo_train.py
 ```
+
 ### 2.2 Prediction with trained audio classification models
+
 In order to run the prediction interface with trained audio classification, run the `demo_predict.py` script with the following syntax:
+
 ```bash
 python3 demo_predict.py
 ```
 
 ## 3. Usage with command line arguments
+
 ### 3.1 Training audio classification models
+
 In order to run the script with command line arguments, use the following syntax:
+
 ```bash
 python3 main.py train /path/to/dataset
 ```
 
 #### 3.1.1 Mandatory arguments
+
 - `folder`: Path to the directory containing the audio files to process.
 
 #### 3.1.2 Optional arguments
 
-__- `--sample_rate`: Sample rate to which the audios will be converted. This value must be an integer.
+- `--sample_rate`: Sample rate to which the audios will be converted. This value must be an integer.
 (Default: 22050)
 
 - `--window`: Time in seconds to be processed as a single element. This value must be a decimal number.
@@ -65,7 +78,7 @@ __- `--sample_rate`: Sample rate to which the audios will be converted. This val
 
 - `--checkpoints_folder`: Path to the directory where the model checkpoints will be saved.
 
-- `--optimizer`: Optimizer from keras.optimizers to use for model training.
+- `--optimizer`: Optimizer from `keras.optimizers` to use for model training.
 (Default: Adam)
 (Available options: Any of https://keras.io/api/optimizers/))
 
@@ -116,19 +129,23 @@ __- `--sample_rate`: Sample rate to which the audios will be converted. This val
 ```bash 
 python3 main.py train /path/to/dataset/ --model_id "my_model" -sr 16000 --window 2 --step 1 --batch_size 32 --epochs 10 --learning_rate 0.001 --audio_augmentations WhiteNoiseAugmentation
 ```
+
 The command will run the script on the dataset in the data/ folder, specifying a series of parameters for the model, the sample rate, the window size, and other processing configurations.
 
 ### 3.2 Prediction with trained audio classification models
+
 In order to run the script with command line arguments, use the following syntax:
+
 ```bash
 python3 main.py predict /path/to/file /path/to/model  
 ```
+
 #### 3.2.1 Mandatory arguments
+
 - `file`: Path to the audio file to process.
 - `model`: Path to the model to use for prediction.
 
 #### 3.2.2 Optional arguments
+
 - `--model_config_path`: Path to the model configuration file.
 - `--task`: Task to perform with the model (classify o segment). Default: segment
-
-
