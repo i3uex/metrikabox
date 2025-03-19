@@ -35,6 +35,17 @@ conda activate metrikabox
 pip install -r requirements.txt
 ```
 
+### 1.4 (Optional) Miniconda Virtual Environment Recreation
+
+You can also recreate the Miniconda virtual environment from zero with the following lines:
+
+```bash
+conda env create --file project_environment.yml
+conda activate metrikabox
+```
+
+In this case, you don't have to install the **requirements.txt** dependencies.
+
 ## 2. Usage with Gradio
 
 ### 2.1 Training audio classification models
