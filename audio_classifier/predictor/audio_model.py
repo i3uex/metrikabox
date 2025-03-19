@@ -3,12 +3,12 @@ import json
 import numpy as np
 from multiprocessing import Lock
 from typing import Union
-import tensorflow as tf
+import keras
 from pydub import AudioSegment
 from sklearn.preprocessing import LabelBinarizer
 from audio_classifier.loaders import FileLoader
+from audio_classifier.model.builder import NormLayer
 from audio_classifier.utils import Singleton
-from audio_classifier.config import MODEL_CONFIG_FOLDER, CHECKPOINTS_FOLDER
 
 BATCH_SIZE = os.environ.get('CLASSIFIER_BATCH_SIZE', '128')
 try:
@@ -21,16 +21,16 @@ class AudioModel(metaclass=Singleton):
     """
     Class to load a model and predict audio
     """
-    def __init__(self, model: Union[tf.keras.Model, str], model_config: Union[dict, str] = ""):
+    def __init__(self, model: Union[keras.Model, str], model_config: Union[dict, str] = ""):
         """
         Class to load a model and predict audio
         :param model_id: ID of the model to load
         """
         self.mtx = Lock()
-        if issubclass(type(model), tf.keras.Model):
+        if issubclass(type(model), keras.Model):
             self.model = model
         else:
-            self.model = tf.keras.models.load_model(model, compile=False, custom_objects={"tf": tf})
+            self.model = keras.models.load_model(model, compile=False, custom_objects={"NormLayer": NormLayer})
         if type(model_config) is dict:
             self.model_config = model_config
         else:
