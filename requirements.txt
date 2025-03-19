@@ -1,9 +1,9 @@
 pydub>=0.25.1
 numpy<2
-scikit-learn
-matplotlib
-keras>=3.1
-tensorflow
-tqdm
-gradio
-soxr
+scikit-learn==1.5.2
+matplotlib==3.9.2
+keras==3.9.0
+tensorflow==2.18.0
+tqdm==4.66.5
+gradio==5.21.0
+soxr==0.5.0.post1
