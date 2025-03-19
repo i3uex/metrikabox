@@ -43,8 +43,7 @@ def get_classification_model(
     :return: Classification model
     """
     input_tensor = layers.Input(shape=input_shape)
-    convolution_layer = layers.Conv2D(3, (3, 3), padding='same')(
-        input_tensor)  # X has a dimension of (IMG_SIZE,N_MELS,3)
+    convolution_layer = layers.Conv2D(3, 1, padding='same')(input_tensor)  # X has a dimension of (IMG_SIZE,N_MELS,3)
     base_model = predefined_model
     for layer in base_model.layers:
         layer.trainable = True  # trainable has to be false in order to freeze the layers
@@ -103,7 +102,7 @@ class AudioModelBuilder:
             num_mel_bins=self.stft_nmels,
             sampling_rate=self.sample_rate,
             min_freq=self.mel_f_min,
-            power_to_db=True
+            power_to_db=False
         )
 
     def get_model(
