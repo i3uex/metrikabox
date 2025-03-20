@@ -110,7 +110,7 @@ In order to run the script with command line arguments, use the following syntax
 python main.py train "datasets/GTZAN Speech_Music"
 ```
 
-This will train a model using the GTZAN Speech &M usic classification dataset, that will be capable of classifying audio files into two classes: "Speech" and "Music".
+This will train a model using the GTZAN Speech & Music classification dataset, that will be capable of classifying audio files into two classes: "Speech" and "Music".
 
 #### 4.1.1. Mandatory Arguments
 
