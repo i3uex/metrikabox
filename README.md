@@ -88,7 +88,7 @@ python demo_train.py
 
 Open the local URL in your web browser. Set the path to the dataset, select the model to train, and click on the **Train** button. A good starting point could be the folder **datasets/GTZAN Speech_Music** with the model **custom.MNIST_convnet**.
 
-Don't forget to download the model () and the configuration for later use.
+Don't forget to download the model and the configuration for later use.
 
 ### 3.2. Prediction with Trained Audio Classification Models
 
