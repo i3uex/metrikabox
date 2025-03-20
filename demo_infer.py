@@ -12,7 +12,7 @@ TASK2MODEL = {
 }
 
 
-def predict(
+def infer(
         audio,
         model_path,
         model_config_path=None,
@@ -42,19 +42,19 @@ with gr.Blocks() as demo:
     with gr.Row():
         with gr.Column():
             inp = [
-                gr.Audio(label="Audio file to predict"),
+                gr.Audio(label="Audio file to infer"),
                 gr.File(label="Model checkpoints (.keras)", file_count='single', type='filepath', file_types=[".keras"]),
                 gr.File(label="Model configuration (.json)", file_count='single', type='filepath', file_types=[".json"]),
             ]
         with gr.Column():
             drop = gr.Dropdown(label="Prediction task", choices=list(TASK2MODEL.keys()))
             out = [
-                gr.Label(label="Prediction result"),
-                gr.Textbox(label="Prediction result", visible=False)
+                gr.Label(label="Classification result"),
+                gr.Textbox(label="Segmentation result", visible=False)
             ]
     inp.append(drop)
-    btn = gr.Button("Predict")
-    btn.click(fn=predict, inputs=inp, outputs=out)
+    btn = gr.Button("Classify")
+    btn.click(fn=infer, inputs=inp, outputs=out)
 
     def update_visibility(prediction_type):  # Accept the event argument, even if not used
         if prediction_type == 'classify':
@@ -62,5 +62,9 @@ with gr.Blocks() as demo:
         else:
             return [gr.update(visible=False), gr.update(visible=True)]
 
+    def update_task(prediction_type):
+        return gr.update(value=prediction_type.capitalize())
+
     drop.change(update_visibility, drop, out)
+    drop.change(update_task, drop, btn)
 demo.launch()
