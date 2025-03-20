@@ -58,7 +58,6 @@ Follow these steps to get your computer ready to use this project:
 
 > **Note:** If you no longer need the Conda environment, just deactivate it with `conda deactivate` and delete it with `conda remove --name metrikabox --all --yes`.
 
-
 ## 2. Usage with Gradio
 
 ### 2.1. Training audio classification models
