@@ -86,6 +86,10 @@ In order to run the audio classification models training interface, run the `dem
 python demo_train.py
 ```
 
+Open the local URL in your web browser. Set the path to the dataset, select the model to train, and click on the **Train** button. A good starting point could be the folder **datasets/GTZAN Speech_Music** with the model **custom.MNIST_convnet**.
+
+Don't forget to download the model () and the configuration for later use.
+
 ### 3.2. Prediction with Trained Audio Classification Models
 
 In order to run the prediction interface with trained audio classification, run the `demo_predict.py` script with the following syntax:
@@ -93,6 +97,8 @@ In order to run the prediction interface with trained audio classification, run 
 ```bash
 python demo_predict.py
 ```
+
+Open the local URL in your web browser. Select or record a new audio to classify. Drop the model and its configuration in the corresponding boxes, and click on the **Classify** button.
 
 ## 4. Usage with Command Line Arguments
 
@@ -104,7 +110,7 @@ In order to run the script with command line arguments, use the following syntax
 python main.py train "datasets/GTZAN Speech_Music"
 ```
 
-This will train a model using the GTZAN Speech&Music classification dataset, that will be capable of classifying audio files into two classes: "Speech" and "Music".
+This will train a model using the GTZAN Speech &M usic classification dataset, that will be capable of classifying audio files into two classes: "Speech" and "Music".
 
 #### 4.1.1. Mandatory Arguments
 
