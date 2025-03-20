@@ -53,6 +53,8 @@ To install FFmpeg, run the following command:
 sudo apt install ffmpeg
 ```
 
+> **Note:** If you no longer need the Conda environment, just deactivate it with `conda deactivate` and delete it with `conda remove --name metrikabox --all --yes`.
+> 
 ## 2. Usage with Gradio
 
 ### 2.1 Training audio classification models
