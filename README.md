@@ -60,12 +60,12 @@ Follow these steps to get your computer ready to use this project:
 
 ## 2. Datasets and Samples
 
-You can download two example datasets ([GTZAN Speech & Music][gtzan_musicspeech_collection] and [GTZAN Genres][gtzan]) by running the script `download_datasets.sh`.
+You can download two example datasets ([GTZAN Speech & Music][gtzan_musicspeech_collection] and [GTZAN Genres][gtzan]) by running the script `bash download_datasets.sh`.
 
 [gtzan_musicspeech_collection]: https://www.kaggle.com/datasets/lnicalo/gtzan-musicspeech-collection "GTZAN music/speech collection"
 [gtzan]: https://www.kaggle.com/datasets/andradaolteanu/gtzan-dataset-music-genre-classification "GTZAN Dataset - Music Genre Classification"
 
-You can download four example audio files (taken from [librosa's data][librosa_data] repository) by running the script `download_samples.sh`.
+You can download four example audio files (taken from [librosa's data][librosa_data] repository) by running the script `bash download_samples.sh`.
 
 [librosa_data]: https://github.com/librosa/data "Example (audio) data for use with librosa."
 
