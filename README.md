@@ -6,7 +6,14 @@ This framework allows you to process an audio dataset for classification tasks u
 
 [keras]: https://keras.io/ "The purpose of Keras is to give an unfair advantage to any developer looking to ship Machine Learning-powered apps"
 
-## Installation Process
+## Table of Contents
+
+1. [Installation Process](#1-installation-process)
+2. [Datasets and Samples](#2-datasets-and-samples)
+3. [Usage with Gradio](#3-usage-with-gradio)
+4. [Usage with command line arguments](#4-usage-with-command-line-arguments)
+
+## 1. Installation Process
 
 Follow these steps to get your computer ready to use this project:
 
@@ -71,7 +78,7 @@ You can download four example audio files (taken from [librosa's data][librosa_d
 
 ## 3. Usage with Gradio
 
-### 3.1. Training audio classification models
+### 3.1. Training Audio Classification Models
 
 In order to run the audio classification models training interface, run the `demo_train.py` script with the following syntax:
 
@@ -79,7 +86,7 @@ In order to run the audio classification models training interface, run the `dem
 python demo_train.py
 ```
 
-### 3.2. Prediction with trained audio classification models
+### 3.2. Prediction with Trained Audio Classification Models
 
 In order to run the prediction interface with trained audio classification, run the `demo_predict.py` script with the following syntax:
 
@@ -87,9 +94,9 @@ In order to run the prediction interface with trained audio classification, run 
 python demo_predict.py
 ```
 
-## 4. Usage with command line arguments
+## 4. Usage with Command Line Arguments
 
-### 4.1. Training audio classification models
+### 4.1. Training Audio Classification Models
 
 In order to run the script with command line arguments, use the following syntax:
 
@@ -99,11 +106,11 @@ python main.py train "datasets/GTZAN Speech_Music"
 
 This will train a model using the GTZAN Speech&Music classification dataset, that will be capable of classifying audio files into two classes: "Speech" and "Music".
 
-#### 4.1.1. Mandatory arguments
+#### 4.1.1. Mandatory Arguments
 
 - `--folder`: Path to the directory containing the folders with the class labels. Each folder must contain the audio files of a single class. 
 
-#### 4.1.2. Optional arguments
+#### 4.1.2. Optional Arguments
 
 - `--sample_rate`: Sample rate to which the audios will be converted. This value must be an integer.
 (Default: 22050)
@@ -163,7 +170,7 @@ This will train a model using the GTZAN Speech&Music classification dataset, tha
 
 - `--epochs`: Number of epochs to train the model.
 
-#### 4.1.3. Advanced usage
+#### 4.1.3. Advanced Usage
 
 In this case we will train a classification model using the GTZAN Genres classification dataset running the following command:
 
@@ -175,7 +182,7 @@ This model will be capable of classifying audio files into 10 different music ge
 
 The command will run the script on the dataset in the genres_original/ folder, specifying a series of parameters for the model, the sample rate, the window size, and other processing configurations.
 
-### 4.2. Prediction with trained audio classification models
+### 4.2. Prediction with Trained Audio Classification Models
 
 In order to run the script with command line arguments, use the following syntax:
 
@@ -183,12 +190,12 @@ In order to run the script with command line arguments, use the following syntax
 python main.py predict samples/audio2.ogg checkpoints/GTZAN_Genres.keras checkpoints/model_config/GTZAN_Genres/model-config.json
 ```
 
-#### 4.2.1. Mandatory arguments
+#### 4.2.1. Mandatory Arguments
 
 - `--file`: Path to the audio file to process.
 - `--model`: Path to the model to use for prediction.
 
-#### 4.2.2 Optional arguments
+#### 4.2.2 Optional Arguments
 
 - `--model_config_path`: Path to the model configuration file.
 - `--task`: Task to perform with the model (classify or segment). Default: segment
