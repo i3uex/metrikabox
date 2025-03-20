@@ -6,92 +6,99 @@ This framework allows you to process an audio dataset for classification tasks u
 
 [keras]: https://keras.io/ "The purpose of Keras is to give an unfair advantage to any developer looking to ship Machine Learning-powered apps"
 
-## 1. Install
+## Installation Process
 
-### 1.1 Clone the repository:
+Follow these steps to get your computer ready to use this project:
 
-```bash
-git clone https://github.com/i3uex/metrikabox
-cd metrikabox
-```
+1. Clone the repository:
 
-### 1.2 (Optional) Create and activate a virtual environment:
+    ```shell
+    git clone https://github.com/i3uex/metrikabox
+    cd metrikabox
+    ```
 
-```bash
-python3 -m venv venv
-source venv/bin/activate  # En Windows usa: venv\Scripts\activate
-```
+2. Optionally, create and activate a virtual environment, either with Python:
 
-### or using `conda`:
+    ```shell
+    python -m venv venv
+    source venv/bin/activate
+    ```
 
-```bash
-conda create --name metrikabox python=3.11 --yes
-conda activate metrikabox
-```
+    > Note: If on Windows, change your path to **venv\Scripts\activate**.
 
-### 1.3 Install the dependencies:
+    or with Conda:
 
-```bash
-pip install -r requirements.txt
-```
+    ```shell
+    conda create --name metrikabox python=3.11 --yes
+    conda activate metrikabox
+    ```
 
-### 1.4 (Optional) Miniconda Virtual Environment Recreation
+3. Install the dependencies:
 
-You can also recreate the Miniconda virtual environment from zero with the following lines:
+    ```shell
+    pip install -r requirements.txt
+    ```
 
-```bash
-conda env create --file project_environment.yml
-conda activate metrikabox
-```
+4. If using Miniconda, you can avoid stems 2 and 3, and recreate the Conda virtual environment from scratch with the following lines:
 
-In this case, you don't have to install the **requirements.txt** dependencies.
+    ```shell
+    conda env create --file project_environment.yml
+    conda activate metrikabox
+    ```
 
-### 1.4 Install FFmpeg:
+5. Install [FFmpeg][ffmpeg] with the following command in Linux:
 
-To install FFmpeg, run the following command:
-```bash
-sudo apt install ffmpeg
-```
+    ```bash
+    sudo apt install ffmpeg
+    ```
+
+    If using another operating system, refer to FFmpeg page for the installation instructions.
+
+    [ffmpeg]: https://www.ffmpeg.org/ "A complete, cross-platform solution to record, convert and stream audio and video"
 
 > **Note:** If you no longer need the Conda environment, just deactivate it with `conda deactivate` and delete it with `conda remove --name metrikabox --all --yes`.
-> 
+
+
 ## 2. Usage with Gradio
 
-### 2.1 Training audio classification models
+### 2.1. Training audio classification models
 
 In order to run the audio classification models training interface, run the `demo_train.py` script with the following syntax:
 
 ```bash
-python3 demo_train.py
+python demo_train.py
 ```
 
-### 2.2 Prediction with trained audio classification models
+### 2.2. Prediction with trained audio classification models
 
 In order to run the prediction interface with trained audio classification, run the `demo_predict.py` script with the following syntax:
 
 ```bash
-python3 demo_predict.py
+python demo_predict.py
 ```
 
 ## 3. Usage with command line arguments
 
-You can download two example datasets (GTZAN Speech&Music classification and GTZAN Genres classification) by running the script `download_datasets.sh`:
+You can download two example datasets ([GTZAN Speech & Music][gtzan_musicspeech_collection] and [GTZAN Genres][gtzan]) by running the script `download_datasets.sh`.
 
-### 3.1 Training audio classification models
+[gtzan_musicspeech_collection]: https://www.kaggle.com/datasets/lnicalo/gtzan-musicspeech-collection "GTZAN music/speech collection"
+[gtzan]: https://www.kaggle.com/datasets/andradaolteanu/gtzan-dataset-music-genre-classification "GTZAN Dataset - Music Genre Classification"
+
+### 3.1. Training audio classification models
 
 In order to run the script with command line arguments, use the following syntax:
 
 ```bash
-python3 main.py train "datasets/GTZAN Speech_Music"
+python main.py train "datasets/GTZAN Speech_Music"
 ```
 
 This will train a model using the GTZAN Speech&Music classification dataset, that will be capable of classifying audio files into two classes: "Speech" and "Music".
 
-#### 3.1.1 Mandatory arguments
+#### 3.1.1. Mandatory arguments
 
-- `folder`: Path to the directory containing the folders with the class labels. Each folder must contain the audio files of a single class. 
+- `--folder`: Path to the directory containing the folders with the class labels. Each folder must contain the audio files of a single class. 
 
-#### 3.1.2 Optional arguments
+#### 3.1.2. Optional arguments
 
 - `--sample_rate`: Sample rate to which the audios will be converted. This value must be an integer.
 (Default: 22050)
@@ -151,33 +158,32 @@ This will train a model using the GTZAN Speech&Music classification dataset, tha
 
 - `--epochs`: Number of epochs to train the model.
 
-
-#### 3.1.3 Advanced usage
+#### 3.1.3. Advanced usage
 
 In this case we will train a classification model using the GTZAN Genres classification dataset running the following command:
 
 ```bash 
-python3 main.py train "datasets/GTZAN Genre/Data/genres_original" --model keras.MobileNetV2 --model_id "GTZAN_Genres" -sr 16000 --window 5 --step 2.5 --batch_size 32 --epochs 100 --learning_rate 0.001 --audio_augmentations [WhiteNoiseAugmentation]
+python main.py train "datasets/GTZAN Genre/Data/genres_original" --model keras.MobileNetV2 --model_id "GTZAN_Genres" -sr 16000 --window 5 --step 2.5 --batch_size 32 --epochs 100 --learning_rate 0.001 --audio_augmentations [WhiteNoiseAugmentation]
 ```
 
 This model will be capable of classifying audio files into 10 different music genres. In this case we use the folder containing the 10 subfolders, each one containing audio files of a different genre.
 
 The command will run the script on the dataset in the genres_original/ folder, specifying a series of parameters for the model, the sample rate, the window size, and other processing configurations.
 
-### 3.2 Prediction with trained audio classification models
+### 3.2. Prediction with trained audio classification models
 
-You can download four example audio files (taken from librosa repository) by running the script `download_samples.sh`:
+You can download four example audio files (taken from librosa repository) by running the script `download_samples.sh`.
 
 In order to run the script with command line arguments, use the following syntax:
 
 ```bash
-python3 main.py predict samples/audio2.ogg checkpoints/GTZAN_Genres.keras checkpoints/model_config/GTZAN_Genres/model-config.json
+python main.py predict samples/audio2.ogg checkpoints/GTZAN_Genres.keras checkpoints/model_config/GTZAN_Genres/model-config.json
 ```
 
-#### 3.2.1 Mandatory arguments
+#### 3.2.1. Mandatory arguments
 
-- `file`: Path to the audio file to process.
-- `model`: Path to the model to use for prediction.
+- `--file`: Path to the audio file to process.
+- `--model`: Path to the model to use for prediction.
 
 #### 3.2.2 Optional arguments
 
