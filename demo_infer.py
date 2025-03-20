@@ -36,7 +36,7 @@ def predict(
 
 with gr.Blocks() as demo:
     gr.Markdown("""
-    # MetrikaBox Predictor!
+    # MetrikaBox Inferencer
     This demo predicts the classes of an audio file using a pre-trained model and its configuration.
     """)
     with gr.Row():

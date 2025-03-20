@@ -42,7 +42,7 @@ def plot_history(history, model_id):
 
 class Main:
 
-    def predict(
+    def infer(
             self,
             filename,
             model_path,

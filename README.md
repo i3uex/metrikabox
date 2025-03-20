@@ -91,7 +91,7 @@ python demo_train.py
 In order to run the prediction interface with trained audio classification, run the `demo_predict.py` script with the following syntax:
 
 ```bash
-python demo_predict.py
+python demo_infer.py
 ```
 
 ## 4. Usage with Command Line Arguments
@@ -187,7 +187,7 @@ The command will run the script on the dataset in the genres_original/ folder, s
 In order to run the script with command line arguments, use the following syntax:
 
 ```bash
-python main.py predict samples/audio2.ogg checkpoints/GTZAN_Genres.keras checkpoints/model_config/GTZAN_Genres/model-config.json
+python main.py infer samples/audio2.ogg checkpoints/GTZAN_Genres.keras checkpoints/model_config/GTZAN_Genres/model-config.json
 ```
 
 #### 4.2.1. Mandatory Arguments
