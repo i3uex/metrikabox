@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+from PIL import Image
 import gradio as gr
 from audio_classifier import Trainer, Dataset
 from audio_classifier.config import DEFAULT_SAMPLE_RATE, CHECKPOINTS_FOLDER, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS
@@ -8,6 +9,7 @@ from audio_classifier.constants import AVAILABLE_KERAS_OPTIMIZERS, AVAILABLE_CLA
     AVAILABLE_AUDIO_AUGMENTATIONS, AVAILABLE_SPECTROGRAM_AUGMENTATIONS
 from audio_classifier.model import DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, \
     DEFAULT_MEL_F_MIN
+import matplotlib.pyplot as plt
 
 
 def train(
@@ -85,15 +87,49 @@ def train(
         epochs=epochs,
         model_id=model_id,
     )
-    os.makedirs('histories', exist_ok=True)
-    history_path = f'histories/{model_id}.json'
-    with open(history_path, "w") as f:
-        json.dump(history.history, f, default=str)
-    return [model_checkpoints, model_config_path, history_path]
+    return [model_checkpoints, model_config_path], [
+        fig2pil(draw_history(history.history, 'accuracy')),
+        fig2pil(draw_history(history.history, 'loss')),
+        fig2pil(draw_history(history.history, 'precision')),
+        fig2pil(draw_history(history.history, 'recall'))
+    ]
+
+
+def draw_history(history, metric):
+    """
+    Plots the history of the model training
+    :param metric: Metric to plot
+    :param history: History object from keras
+    :return: Figure
+    """
+    fig, ax = plt.subplots(1, 1)
+    if metric == "accuracy":
+        metric = 'binary_accuracy' if 'binary_accuracy' in history else 'categorical_accuracy'
+    ax.plot(history[metric])
+    ax.plot(history[f'val_{metric}'])
+    ax.set_title(f'Model {metric.replace("_", " ").title()}')
+    ax.set_ylabel(metric)
+    ax.set_xlabel('epoch')
+    ax.legend(['train', 'val'], loc='upper left')
+    return fig
+
+
+def fig2pil(fig):
+    """
+    Converts a matplotlib figure to a PIL image
+    :param fig: Figure to convert
+    :return: PIL image
+    """
+    fig.canvas.draw()
+    return Image.frombytes('RGB', fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
 
 
 with gr.Blocks() as demo:
-    gr.Markdown("Start typing below and then click **Train** to see the output.")
+    gr.Markdown("""
+    # MetrikaBox Trainer
+    This demo trains a model using a dataset of audio files and a predefined model or a custom one.
+    You can also set the training parameters like the optimizer, the learning rate, the batch size and other advanced parameters.
+    """)
     inp = []
     with gr.Row():
         with gr.Column():
@@ -101,7 +137,8 @@ with gr.Blocks() as demo:
             inp.append(gr.Dropdown(choices=sorted(AVAILABLE_MODELS.keys()), value="custom.MNIST_convnet", label="Model to train"))  # model
         with gr.Column():
             out = [
-                gr.File(label="Model")
+                gr.File(label="Model"),
+                gr.Gallery(label="Training metrics")
             ]
     btn = gr.Button("Train")
     with gr.Accordion("Aditional training params", open=False):
