@@ -62,8 +62,9 @@ class Main:
             with open(f"{base_file_name}_probas.json", 'w') as f:
                 json.dump(probabilities.tolist(), f)
             predictions = model.format_output(probabilities)
-            with open(f"{base_file_name}.json", 'w') as f:
-                json.dump(predictions, f)
+            with open(f"{base_file_name}_{task}.json", 'w') as f:
+                json.dump(predictions, f, default=str)
+            print(predictions)
 
     def train(
             self,

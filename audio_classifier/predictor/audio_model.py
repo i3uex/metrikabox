@@ -6,6 +6,7 @@ from typing import Union
 import keras
 from pydub import AudioSegment
 from sklearn.preprocessing import LabelBinarizer
+from audio_classifier.constants import AVAILABLE_AUDIO_AUGMENTATIONS
 from audio_classifier.loaders import FileLoader
 from audio_classifier.model.builder import NormLayer
 from audio_classifier.utils import Singleton
@@ -30,7 +31,9 @@ class AudioModel(metaclass=Singleton):
         if issubclass(type(model), keras.Model):
             self.model = model
         else:
-            self.model = keras.models.load_model(model, compile=False, custom_objects={"NormLayer": NormLayer})
+            custom_objects = AVAILABLE_AUDIO_AUGMENTATIONS.copy()
+            custom_objects["NormLayer"] = NormLayer
+            self.model = keras.models.load_model(model, compile=False, custom_objects=custom_objects)
         if type(model_config) is dict:
             self.model_config = model_config
         else:
