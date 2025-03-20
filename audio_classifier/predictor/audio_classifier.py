@@ -13,11 +13,10 @@ class AudioClassifier(AudioModel):
         :param y: class predictions
         :return:
         """
-        ensamble = fn(y.T, axis=1)
-        score = ensamble.max()
-        if len(self.encoder.classes_) == 2 and score < 0.5:
-            score = 1-score
-        return {self.encoder.inverse_transform(np.expand_dims(ensamble, 0))[0]: score}
+        ensemble = fn(y.T, axis=1)
+        if len(ensemble) == 1:
+            ensemble = np.insert(ensemble, 0, 1 - ensemble[0])
+        return {self.encoder.classes_[i]: sc for i, sc in enumerate(ensemble)}
 
 
 if __name__ == '__main__':
