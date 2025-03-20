@@ -80,7 +80,7 @@ You can download four example audio files (taken from [librosa's data][librosa_d
 
 ### 3.1. Training Audio Classification Models
 
-In order to run the audio classification models training interface, run the `demo_train.py` script with the following syntax:
+In order to run the [Gradio][gradio] audio classification models training interface, run the `demo_train.py` script with the following syntax:
 
 ```bash
 python demo_train.py
@@ -92,13 +92,15 @@ Don't forget to download the model and the configuration for later use.
 
 ### 3.2. Prediction with Trained Audio Classification Models
 
-In order to run the prediction interface with trained audio classification, run the `demo_predict.py` script with the following syntax:
+In order to run the [Gradio][gradio] prediction interface with trained audio classification, run the `demo_predict.py` script with the following syntax:
 
 ```bash
 python demo_infer.py
 ```
 
 Open the local URL in your web browser. Select or record a new audio to classify. Drop the model and its configuration in the corresponding boxes, and click on the **Classify** button.
+
+[gradio]: https://www.gradio.app/ "Build & share delightful machine learning apps"
 
 ## 4. Usage with Command Line Arguments
 
