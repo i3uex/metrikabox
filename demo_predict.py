@@ -47,10 +47,10 @@ with gr.Blocks() as demo:
                 gr.File(label="Model configuration (.json)", file_count='single', type='filepath', file_types=[".json"]),
             ]
         with gr.Column():
-            drop = gr.Dropdown(choices=list(TASK2MODEL.keys()))
+            drop = gr.Dropdown(label="Prediction task", choices=list(TASK2MODEL.keys()))
             out = [
-                gr.Label(label="Prediction"),
-                gr.Textbox(label="Prediction", visible=False)
+                gr.Label(label="Prediction result"),
+                gr.Textbox(label="Prediction result", visible=False)
             ]
     inp.append(drop)
     btn = gr.Button("Predict")
