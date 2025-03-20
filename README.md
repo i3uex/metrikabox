@@ -58,9 +58,20 @@ Follow these steps to get your computer ready to use this project:
 
 > **Note:** If you no longer need the Conda environment, just deactivate it with `conda deactivate` and delete it with `conda remove --name metrikabox --all --yes`.
 
-## 2. Usage with Gradio
+## 2. Datasets and Samples
 
-### 2.1. Training audio classification models
+You can download two example datasets ([GTZAN Speech & Music][gtzan_musicspeech_collection] and [GTZAN Genres][gtzan]) by running the script `download_datasets.sh`.
+
+[gtzan_musicspeech_collection]: https://www.kaggle.com/datasets/lnicalo/gtzan-musicspeech-collection "GTZAN music/speech collection"
+[gtzan]: https://www.kaggle.com/datasets/andradaolteanu/gtzan-dataset-music-genre-classification "GTZAN Dataset - Music Genre Classification"
+
+You can download four example audio files (taken from [librosa's data][librosa_data] repository) by running the script `download_samples.sh`.
+
+[librosa_data]: https://github.com/librosa/data "Example (audio) data for use with librosa."
+
+## 3. Usage with Gradio
+
+### 3.1. Training audio classification models
 
 In order to run the audio classification models training interface, run the `demo_train.py` script with the following syntax:
 
@@ -68,7 +79,7 @@ In order to run the audio classification models training interface, run the `dem
 python demo_train.py
 ```
 
-### 2.2. Prediction with trained audio classification models
+### 3.2. Prediction with trained audio classification models
 
 In order to run the prediction interface with trained audio classification, run the `demo_predict.py` script with the following syntax:
 
@@ -76,14 +87,9 @@ In order to run the prediction interface with trained audio classification, run 
 python demo_predict.py
 ```
 
-## 3. Usage with command line arguments
+## 4. Usage with command line arguments
 
-You can download two example datasets ([GTZAN Speech & Music][gtzan_musicspeech_collection] and [GTZAN Genres][gtzan]) by running the script `download_datasets.sh`.
-
-[gtzan_musicspeech_collection]: https://www.kaggle.com/datasets/lnicalo/gtzan-musicspeech-collection "GTZAN music/speech collection"
-[gtzan]: https://www.kaggle.com/datasets/andradaolteanu/gtzan-dataset-music-genre-classification "GTZAN Dataset - Music Genre Classification"
-
-### 3.1. Training audio classification models
+### 4.1. Training audio classification models
 
 In order to run the script with command line arguments, use the following syntax:
 
@@ -93,11 +99,11 @@ python main.py train "datasets/GTZAN Speech_Music"
 
 This will train a model using the GTZAN Speech&Music classification dataset, that will be capable of classifying audio files into two classes: "Speech" and "Music".
 
-#### 3.1.1. Mandatory arguments
+#### 4.1.1. Mandatory arguments
 
 - `--folder`: Path to the directory containing the folders with the class labels. Each folder must contain the audio files of a single class. 
 
-#### 3.1.2. Optional arguments
+#### 4.1.2. Optional arguments
 
 - `--sample_rate`: Sample rate to which the audios will be converted. This value must be an integer.
 (Default: 22050)
@@ -157,7 +163,7 @@ This will train a model using the GTZAN Speech&Music classification dataset, tha
 
 - `--epochs`: Number of epochs to train the model.
 
-#### 3.1.3. Advanced usage
+#### 4.1.3. Advanced usage
 
 In this case we will train a classification model using the GTZAN Genres classification dataset running the following command:
 
@@ -169,9 +175,7 @@ This model will be capable of classifying audio files into 10 different music ge
 
 The command will run the script on the dataset in the genres_original/ folder, specifying a series of parameters for the model, the sample rate, the window size, and other processing configurations.
 
-### 3.2. Prediction with trained audio classification models
-
-You can download four example audio files (taken from librosa repository) by running the script `download_samples.sh`.
+### 4.2. Prediction with trained audio classification models
 
 In order to run the script with command line arguments, use the following syntax:
 
@@ -179,12 +183,12 @@ In order to run the script with command line arguments, use the following syntax
 python main.py predict samples/audio2.ogg checkpoints/GTZAN_Genres.keras checkpoints/model_config/GTZAN_Genres/model-config.json
 ```
 
-#### 3.2.1. Mandatory arguments
+#### 4.2.1. Mandatory arguments
 
 - `--file`: Path to the audio file to process.
 - `--model`: Path to the model to use for prediction.
 
-#### 3.2.2 Optional arguments
+#### 4.2.2 Optional arguments
 
 - `--model_config_path`: Path to the model configuration file.
 - `--task`: Task to perform with the model (classify or segment). Default: segment
