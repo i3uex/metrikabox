@@ -12,6 +12,7 @@ This framework allows you to process an audio dataset for classification tasks u
 2. [Datasets and Samples](#2-datasets-and-samples)
 3. [Usage with Gradio](#3-usage-with-gradio)
 4. [Usage with command line arguments](#4-usage-with-command-line-arguments)
+5. [Citing this Work](#5-citing-this-work)
 
 ## 1. Installation Process
 
@@ -207,3 +208,23 @@ python main.py infer samples/audio2.ogg checkpoints/GTZAN_Genres.keras checkpoin
 
 - `--model_config_path`: Path to the model configuration file.
 - `--task`: Task to perform with the model (classify or segment). Default: segment
+
+## 5. Citing this Work
+
+This repository contains the code required to reproduce the experiments from our paper, ["Paper"][paper]. If you use this work in your research, please cite it using the following BibTeX entry:
+
+```
+@article{perianezpascual25,
+    title = {MetrikaBox: an open framework for experimenting with audio classification},
+    author = {Perianez-Pascual, Jorge and Gutiérrez, Juan D. and Rodriguez-Echeverria, Roberto and Sánchez Figueroa, Fernando},
+    doi = {10.1000/182},
+    journal = {SoftwareX},
+    langid = {english},
+    month = {January},
+    number = {1},
+    volume = {1},
+    year = {2025}
+}
+```
+
+[paper]: https://doi.org/10.1000/182 "MetrikaBox: an open framework for experimenting with audio classification"
