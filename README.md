@@ -106,7 +106,7 @@ This will train a model using the GTZAN Speech&Music classification dataset, tha
 
 - `--optimizer`: Optimizer from `keras.optimizers` to use for model training.
 (Default: Adam)
-(Available options: Any of https://keras.io/api/optimizers/))
+(Available options: Any of https://keras.io/api/optimizers/)
 
 - `--class_loader`: Loader class to use.
 (Default: Load classes from the folder name with the audio files)
@@ -133,7 +133,7 @@ This will train a model using the GTZAN Speech&Music classification dataset, tha
 - `--mel_f_min`: Lowest frequency of the Mel filter band.
 (Default: 0)
 
-- `--model`: Specifies the keras.applications model to use for classification.
+- `--model`: Specifies the `keras.applications` model to use for classification.
 (Default: MNIST (https://keras.io/examples/vision/mnist_convnet/))
 (Available options: Any of https://keras.io/api/applications/)
 
@@ -180,4 +180,4 @@ python3 main.py predict samples/audio2.ogg checkpoints/GTZAN_Genres.keras checkp
 #### 3.2.2 Optional arguments
 
 - `--model_config_path`: Path to the model configuration file.
-- `--task`: Task to perform with the model (classify o segment). Default: segment
+- `--task`: Task to perform with the model (classify or segment). Default: segment
