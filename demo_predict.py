@@ -31,18 +31,36 @@ def predict(
         LOGGER.warning(f"Sample rate of the audio {sr} does not match the sample rate of the model {model_sample_rate}. Resampling.")
         audio = soxr.resample(audio, sr, model_sample_rate)
     predictions = model.predict(audio)
-    return json.dumps(predictions, default=str)
+    return (predictions, "") if task == 'classify' else ("", json.dumps(predictions, default=str))
 
 
-demo = gr.Interface(
-    fn=predict,
-    inputs=[
-        gr.Audio(),
-        gr.File(file_count='single', type='filepath'),
-        gr.File(file_count='single', type='filepath'),
-        gr.Dropdown(choices=list(TASK2MODEL.keys())),
-    ],
-    outputs=["text"],
-)
+with gr.Blocks() as demo:
+    gr.Markdown("""
+    # MetrikaBox Predictor!
+    This demo predicts the classes of an audio file using a pre-trained model and its configuration.
+    """)
+    with gr.Row():
+        with gr.Column():
+            inp = [
+                gr.Audio(label="Audio file to predict"),
+                gr.File(label="Model checkpoints (.keras)", file_count='single', type='filepath', file_types=[".keras"]),
+                gr.File(label="Model configuration (.json)", file_count='single', type='filepath', file_types=[".json"]),
+            ]
+        with gr.Column():
+            drop = gr.Dropdown(choices=list(TASK2MODEL.keys()))
+            out = [
+                gr.Label(label="Prediction"),
+                gr.Textbox(label="Prediction", visible=False)
+            ]
+    inp.append(drop)
+    btn = gr.Button("Predict")
+    btn.click(fn=predict, inputs=inp, outputs=out)
 
+    def update_visibility(prediction_type):  # Accept the event argument, even if not used
+        if prediction_type == 'classify':
+            return [gr.update(visible=True), gr.update(visible=False)]
+        else:
+            return [gr.update(visible=False), gr.update(visible=True)]
+
+    drop.change(update_visibility, drop, out)
 demo.launch()
