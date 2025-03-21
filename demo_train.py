@@ -29,7 +29,9 @@ def train(
         stft_n_mels,
         mel_f_min,
         audio_augmentations,
-        spectrogram_augmentations
+        spectrogram_augmentations,
+        early_stopping_patience,
+        reduce_lr_on_plateau_patience
 ):
     """
     Trains the model
@@ -85,6 +87,8 @@ def train(
         batch_size=batch_size,
         epochs=epochs,
         model_id=model_id,
+        early_stopping_patience=early_stopping_patience,
+        reduce_lr_on_plateau_patience=reduce_lr_on_plateau_patience
     )
     return [model_checkpoints, model_config_path], [
         get_image_from_history(history.history, 'accuracy'),
@@ -212,6 +216,20 @@ with gr.Blocks() as demo:
                 choices=sorted(AVAILABLE_SPECTROGRAM_AUGMENTATIONS.keys()),
                 multiselect=True
             ),  # spectrogram_augmentations
+            gr.Slider(
+                label="Early Stopping patience",
+                info="Patience for early stopping (0 for no early stopping)",
+                minimum=0,
+                maximum=100,
+                value=constants.DEFAULT_EARLY_STOPPING_PATIENCE
+            ),  # early_stopping_patience
+            gr.Slider(
+                label="Reduce LR on Plateau patience",
+                info="Patience for reducing the learning rate on plateau (0 for no reducing)",
+                minimum=0,
+                maximum=100,
+                value=constants.DEFAULT_REDUCE_LR_ON_PLATEAU_PATIENCE
+            ),  # early_stopping_patience
         ])
     btn.click(fn=train, inputs=inp, outputs=out)
 

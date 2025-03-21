@@ -93,6 +93,8 @@ class Trainer:
             epochs: int = DEFAULT_EPOCHS,
             checkpoints_folder: str = CHECKPOINTS_FOLDER,
             model_id: str = "model_id"
+            early_stopping_patience: int = constants.DEFAULT_EARLY_STOPPING_PATIENCE,
+            reduce_lr_on_plateau_patience: int = constants.DEFAULT_REDUCE_LR_ON_PLATEAU_PATIENCE,
     ) -> Tuple[str, str, tf.keras.callbacks.History]:
 
         x, y = dataset.load()
@@ -150,30 +152,37 @@ class Trainer:
 
         # Perform training
         LOGGER.info("Starting training")
+        callbacks = [
+            tf.keras.callbacks.ModelCheckpoint(
+                filepath=checkpoint_filepath,
+                monitor='val_loss',
+                mode='min',
+                save_best_only=True
+            ),
+              tf.keras.callbacks.TensorBoard(
+                  log_dir=f'logs/{model_id}/'
+              )
+        ]
+        if early_stopping_patience > 0:
+            callbacks.append(
+                tf.keras.callbacks.EarlyStopping(
+                    monitor='val_categorical_accuracy' if num_classes > 2 else 'val_binary_accuracy',
+                    min_delta=0.025,
+                    verbose=1,
+                    patience=early_stopping_patience
+                )
+            )
+        if True:
+            callbacks.append(
+                tf.keras.callbacks.ReduceLROnPlateau(
+                    verbose=1,
+                    patience=reduce_lr_on_plateau_patience
+                )
+            )
         history = model.fit(
             train_dataset,
             validation_data=val_dataset,
             epochs=epochs,
-            callbacks=[
-              tf.keras.callbacks.ModelCheckpoint(
-                  filepath=checkpoint_filepath,
-                  monitor='val_loss',
-                  mode='min',
-                  save_best_only=True
-              ),
-              tf.keras.callbacks.EarlyStopping(
-                  monitor='val_categorical_accuracy' if num_classes > 2 else 'val_binary_accuracy',
-                  min_delta=0.025,
-                  verbose=1,
-                  patience=25
-              ),
-              tf.keras.callbacks.ReduceLROnPlateau(
-                  verbose=1,
-                  patience=25
-              ),
-              tf.keras.callbacks.TensorBoard(
-                  log_dir=f'logs/{model_id}/'
-              )
-            ]
+            callbacks=callbacks
         )
         return checkpoint_filepath, model_config_path, history
