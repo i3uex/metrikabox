@@ -83,7 +83,7 @@ class Trainer:
             dataset: Dataset,
             val_size: float = 0.2,
             optimizer: str = None,
-            learning_rate: float = 0.001,
+            learning_rate: float = constants.DEFAULT_LR,
             batch_size: int = constants.DEFAULT_BATCH_SIZE,
             epochs: int = constants.DEFAULT_EPOCHS,
             checkpoints_folder: str = constants.CHECKPOINTS_FOLDER,
