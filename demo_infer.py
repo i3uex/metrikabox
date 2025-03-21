@@ -1,9 +1,9 @@
 import json
 import gradio as gr
 import soxr
-from audio_classifier import AudioClassifier, AudioSegmenter
-from audio_classifier.config import MODEL_CONFIG_FOLDER
 from audio_classifier.utils import LOGGER
+from audio_classifier import constants
+from audio_classifier import AudioClassifier, AudioSegmenter
 
 
 TASK2MODEL = {
@@ -20,7 +20,7 @@ def infer(
 ):
     if not model_config_path:
         base_path, model_name = model_path.rsplit('.', 1)[0].rsplit('/', 1)
-        model_config_path = f"{base_path}/{MODEL_CONFIG_FOLDER}/{model_name}/model-config.json"
+        model_config_path = f"{base_path}/{constants.MODEL_CONFIG_FOLDER}/{model_name}/model-config.json"
     sr, audio = audio
     model = TASK2MODEL[task](model_path, model_config_path)
     model_sample_rate = model.model_config.get('sample_rate')

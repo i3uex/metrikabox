@@ -1,8 +1,6 @@
 from collections import Counter
 from typing import Collection
-
-from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
-from audio_classifier.constants import AVAILABLE_CLASS_LOADERS
+from audio_classifier import constants
 from audio_classifier.loaders import ClassLoaderFromFolderName, FolderLoader
 from audio_classifier.utils import LOGGER
 
@@ -12,9 +10,9 @@ class Dataset:
     def __init__(
             self,
             folder: str,
-            sample_rate: int = DEFAULT_SAMPLE_RATE,
-            window: float = DEFAULT_WINDOW,
-            step: float = DEFAULT_STEP,
+            sample_rate: int = constants.DEFAULT_SAMPLE_RATE,
+            window: float = constants.DEFAULT_WINDOW,
+            step: float = constants.DEFAULT_STEP,
             classes2avoid: Collection[str] = (),
             class_loader=None
     ):
@@ -24,7 +22,7 @@ class Dataset:
         self.folder = folder
         self.classes2avoid = classes2avoid
         if class_loader:
-            class_loader = AVAILABLE_CLASS_LOADERS[class_loader]()
+            class_loader = constants.AVAILABLE_CLASS_LOADERS[class_loader]()
         else:
             class_loader = ClassLoaderFromFolderName()
         self.data_loader = FolderLoader(

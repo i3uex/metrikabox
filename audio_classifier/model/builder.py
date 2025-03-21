@@ -1,21 +1,13 @@
 from typing import List, Union
-
-from pydub import AudioSegment
-import tensorflow as tf
 import keras
 import numpy as np
-
-from audio_classifier.augmentations import AudioAugmentationLayer, SpectrogramAugmentationLayer
-from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
+import tensorflow as tf
+from pydub import AudioSegment
+from audio_classifier import constants
 from audio_classifier.loaders import FileLoader
 from audio_classifier.model.classification import MNIST_convnet
+from audio_classifier.augmentations import AudioAugmentationLayer, SpectrogramAugmentationLayer
 
-# Tested for 1 step and 2 win @ 16000 Hz
-DEFAULT_STFT_HOP = 256
-DEFAULT_STFT_N_FFT = DEFAULT_STFT_HOP * 4
-DEFAULT_STFT_WIN = DEFAULT_STFT_HOP * 4
-DEFAULT_MEL_F_MIN = 0
-DEFAULT_N_MELS = 128
 DEFAULT_PREDEFINED_MODEL = MNIST_convnet()
 
 
@@ -63,14 +55,14 @@ class AudioModelBuilder:
 
     def __init__(
             self,
-            sample_rate: int = DEFAULT_SAMPLE_RATE,
-            window: float = DEFAULT_WINDOW,
-            step: float = DEFAULT_STEP,
-            mel_f_min: int = DEFAULT_MEL_F_MIN,
-            stft_nfft: int = DEFAULT_STFT_N_FFT,
-            stft_window: int = DEFAULT_STFT_WIN,
-            stft_hop: int = DEFAULT_STFT_HOP,
-            stft_nmels: int = DEFAULT_N_MELS
+            sample_rate: int = constants.DEFAULT_SAMPLE_RATE,
+            window: float = constants.DEFAULT_WINDOW,
+            step: float = constants.DEFAULT_STEP,
+            mel_f_min: int = constants.DEFAULT_MEL_F_MIN,
+            stft_nfft: int = constants.DEFAULT_STFT_N_FFT,
+            stft_window: int = constants.DEFAULT_STFT_WIN,
+            stft_hop: int = constants.DEFAULT_STFT_HOP,
+            stft_nmels: int = constants.DEFAULT_N_MELS
     ):
         """
         Class to build audio models

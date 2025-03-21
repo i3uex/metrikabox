@@ -1,6 +1,6 @@
 from audio_classifier.augmentations.AugmentationLayer import SpectrogramAugmentationLayer
 import tensorflow as tf
-import keras.backend as K
+import keras
 
 
 class SpecAugmentLayer(SpectrogramAugmentationLayer):
@@ -72,7 +72,7 @@ class SpecAugmentLayer(SpectrogramAugmentationLayer):
                 "than zero"
             )
 
-        self.data_format = K.image_data_format() if data_format == 'default' else data_format
+        self.data_format = keras.backend.image_data_format() if data_format == 'default' else data_format
 
     @staticmethod
     def _generate_axis_mask(inputs):
@@ -115,7 +115,7 @@ class SpecAugmentLayer(SpectrogramAugmentationLayer):
             (float `Tensor`): The masked spectrogram. Its shape is (time, freq, ch) or (ch, time, freq)
                 depending on x shape (that is, the input spectrogram).
         """
-        axis_limit = K.int_shape(x)[axis]
+        axis_limit = keras.backend.int_shape(x)[axis]
         axis_indices = tf.range(axis_limit)
 
         if axis == 0:
@@ -179,14 +179,14 @@ class SpecAugmentLayer(SpectrogramAugmentationLayer):
         if training in (None, False):
             return x
 
-        if K.ndim(x) != 4:
+        if keras.backend.ndim(x) != 4:
             raise ValueError(
-                'ndim of input tensor x should be 4 (batch spectrogram),' 'but it is %d' % K.ndim(x)
+                'ndim of input tensor x should be 4 (batch spectrogram),' 'but it is %d' % keras.backend.ndim(x)
             )
 
         ch_axis = 1 if self.data_format == 'channels_first' else 3
 
-        if K.int_shape(x)[ch_axis] != 1:
+        if keras.backend.int_shape(x)[ch_axis] != 1:
             raise RuntimeError(
                 'SpecAugmentLayer does not support spectrograms with depth greater than 1'
             )

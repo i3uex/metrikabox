@@ -1,7 +1,7 @@
-from tensorflow.keras.layers import Layer
+import keras
 
 
-class AugmentationLayer(Layer):
+class AugmentationLayer(keras.layers.Layer):
     """
     Base class for augmentation layers
     """

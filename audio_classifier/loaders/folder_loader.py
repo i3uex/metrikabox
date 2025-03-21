@@ -1,17 +1,15 @@
-import glob
 import os
+import glob
 import random
-from concurrent.futures import ProcessPoolExecutor
 import multiprocessing
 from typing import Tuple, Collection
-
+from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 from tqdm import tqdm
-
-from audio_classifier.loaders.class_loader import ClassLoader
-from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
-from audio_classifier.loaders.file_loader import FileLoader
+from audio_classifier import constants
 from audio_classifier.utils import LOGGER
+from audio_classifier.loaders.file_loader import FileLoader
+from audio_classifier.loaders.class_loader import ClassLoader
 
 BASE_PATH = ''
 
@@ -19,9 +17,9 @@ BASE_PATH = ''
 class FolderLoader:
     def __init__(
             self,
-            sample_rate: int = DEFAULT_SAMPLE_RATE,
-            window: float = DEFAULT_WINDOW,
-            step: float = DEFAULT_STEP,
+            sample_rate: int = constants.DEFAULT_SAMPLE_RATE,
+            window: float = constants.DEFAULT_WINDOW,
+            step: float = constants.DEFAULT_STEP,
             class_loader: ClassLoader = ClassLoader(),
     ):
         """

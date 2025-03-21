@@ -1,11 +1,7 @@
 import datetime
 import gradio as gr
+from audio_classifier import constants
 from audio_classifier import Trainer, Dataset
-from audio_classifier.config import DEFAULT_SAMPLE_RATE, CHECKPOINTS_FOLDER, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS
-from audio_classifier.constants import AVAILABLE_KERAS_OPTIMIZERS, AVAILABLE_CLASS_LOADERS, AVAILABLE_MODELS, \
-    AVAILABLE_AUDIO_AUGMENTATIONS, AVAILABLE_SPECTROGRAM_AUGMENTATIONS
-from audio_classifier.model import DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, \
-    DEFAULT_MEL_F_MIN
 from demo_utils import get_image_from_history
 
 
@@ -108,7 +104,7 @@ with gr.Blocks() as demo:
     with gr.Row():
         with gr.Column():
             inp.append(gr.Textbox(placeholder="/path/to/dataset", label="Dataset Path"))
-            inp.append(gr.Dropdown(choices=sorted(AVAILABLE_MODELS.keys()), value="custom.MNIST_convnet", label="Model to train"))  # model
+            inp.append(gr.Dropdown(choices=sorted(constants.AVAILABLE_MODELS.keys()), value="custom.MNIST_convnet", label="Model to train"))  # model
         with gr.Column():
             out = [
                 gr.File(label="Model"),
@@ -121,21 +117,21 @@ with gr.Blocks() as demo:
                 label="Sampling rate",
                 info="Sampling rate the audios will be converted to",
                 choices=[8000, 16000, 22050, 32000, 44100],
-                value=DEFAULT_SAMPLE_RATE
+                value=constants.DEFAULT_SAMPLE_RATE
             ),  # sample_rate
             gr.Slider(
                 label="Window",
                 info="Seconds of audio to use for each item",
                 minimum=1,
                 maximum=10,
-                value=2
+                value=constants.DEFAULT_WINDOW
             ),  # window
             gr.Slider(
                 label="Step",
                 info="Seconds to move the window for each item",
                 minimum=1,
                 maximum=10,
-                value=1
+                value=constants.DEFAULT_STEP
             ),  # step
             gr.Text(
                 label="Classes to avoid",
@@ -144,28 +140,28 @@ with gr.Blocks() as demo:
             gr.Text(
                 label="Checkpoints folder",
                 info="Folder in which the checkpoints of the model will be saved to",
-                value=CHECKPOINTS_FOLDER
+                value=constants.CHECKPOINTS_FOLDER
             ),  # checkpoints_folder
             gr.Dropdown(
                 label="Optimizer",
                 info="Optimizer to be used in training",
-                choices=sorted(AVAILABLE_KERAS_OPTIMIZERS.keys()),
+                choices=sorted(constants.AVAILABLE_KERAS_OPTIMIZERS.keys()),
                 value="Adam"
             ),  # optimizer
             gr.Number(
                 label="Batch Size",
                 info="Number of items to use in each batch",
-                value=DEFAULT_BATCH_SIZE
+                value=constants.DEFAULT_BATCH_SIZE
             ),  # batch_size
             gr.Number(
                 label="Epochs",
                 info="Number of epochs to train the model",
-                value=DEFAULT_EPOCHS
+                value=constants.DEFAULT_EPOCHS
             ),  # epochs
             gr.Dropdown(
                 label="Class loader",
                 info="Class loader to use for the dataset",
-                choices=sorted(AVAILABLE_CLASS_LOADERS.keys()),
+                choices=sorted(constants.AVAILABLE_CLASS_LOADERS.keys()),
                 value="ClassLoaderFromFolderName"
             ),  # class_loader
             gr.Slider(
@@ -183,37 +179,37 @@ with gr.Blocks() as demo:
             gr.Number(
                 label="STFT number FFT",
                 info="Number of FFTs to use",
-                value=DEFAULT_STFT_N_FFT
+                value=constants.DEFAULT_STFT_N_FFT
             ),  # stft_nfft
             gr.Number(
                 label="STFT window",
                 info="Length of the STFT window",
-                value=DEFAULT_STFT_WIN
+                value=constants.DEFAULT_STFT_WIN
             ),  # stft_win
             gr.Number(
                 label="STFT hop",
                 info="Length of the STFT hop",
-                value=DEFAULT_STFT_HOP
+                value=constants.DEFAULT_STFT_HOP
             ),  # stft_hop
             gr.Number(
                 label="Mel bands",
                 info="Number of mel bands to use",
-                value=DEFAULT_N_MELS
+                value=constants.DEFAULT_N_MELS
             ),  # stft_nmels
             gr.Number(
                 label="Minimum frequency",
                 info="Minimum frequency for the mel bands",
-                value=DEFAULT_MEL_F_MIN
+                value=constants.DEFAULT_MEL_F_MIN
             ),  # mel_f_min
             gr.Dropdown(
                 label="Audio augmentations",
                 info="List of audio augmentations to use",
-                choices=sorted(AVAILABLE_AUDIO_AUGMENTATIONS.keys()),
+                choices=sorted(constants.AVAILABLE_AUDIO_AUGMENTATIONS.keys()),
                 multiselect=True
             ),  # audio_augmentations
             gr.Dropdown(
                 label="Spectrogram augmentations",
-                choices=sorted(AVAILABLE_SPECTROGRAM_AUGMENTATIONS.keys()),
+                choices=sorted(constants.AVAILABLE_SPECTROGRAM_AUGMENTATIONS.keys()),
                 multiselect=True
             ),  # spectrogram_augmentations
             gr.Slider(

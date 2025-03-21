@@ -1,4 +1,4 @@
-from tensorflow.keras import Sequential, Model, layers
+from keras import Sequential, Model, layers
 
 
 def MNIST_convnet(**kwargs) -> Model:

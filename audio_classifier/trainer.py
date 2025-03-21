@@ -4,15 +4,10 @@ from typing import List, Tuple, Collection
 import tensorflow as tf
 from sklearn.utils.class_weight import compute_sample_weight
 from sklearn.preprocessing import LabelBinarizer
-
 from audio_classifier import Dataset
-from audio_classifier.config import MODEL_CONFIG_FOLDER, DEFAULT_BATCH_SIZE, \
-    DEFAULT_EPOCHS, CHECKPOINTS_FOLDER
-from audio_classifier.model import AudioModelBuilder, DEFAULT_STFT_HOP, DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_N_MELS, \
-    DEFAULT_MEL_F_MIN
-from audio_classifier.constants import AVAILABLE_MODELS, AVAILABLE_AUDIO_AUGMENTATIONS, AVAILABLE_SPECTROGRAM_AUGMENTATIONS, \
-    AVAILABLE_KERAS_OPTIMIZERS
+from audio_classifier import constants
 from audio_classifier.utils import LOGGER
+from audio_classifier.model import AudioModelBuilder
 
 
 def _generate(x: Collection, y: Collection, class_weight='balanced') -> callable:
@@ -23,8 +18,8 @@ def _generate(x: Collection, y: Collection, class_weight='balanced') -> callable
     return _gen
 
 
-def _dump_model_config(model_id: str, model_config: dict, checkpoints_folder: str = CHECKPOINTS_FOLDER):
-    model_id_config_folder = f'{checkpoints_folder}/{MODEL_CONFIG_FOLDER}/{model_id}'
+def _dump_model_config(model_id: str, model_config: dict, checkpoints_folder: str = constants.CHECKPOINTS_FOLDER):
+    model_id_config_folder = f'{checkpoints_folder}/{constants.MODEL_CONFIG_FOLDER}/{model_id}'
     os.makedirs(model_id_config_folder, exist_ok=True)
     model_config_file_path = f'{model_id_config_folder}/model-config.json'
     with open(model_config_file_path, "w") as f:
@@ -35,11 +30,11 @@ def _dump_model_config(model_id: str, model_config: dict, checkpoints_folder: st
 class Trainer:
     def __init__(
             self,
-            stft_nfft: int = DEFAULT_STFT_N_FFT,
-            stft_win: int = DEFAULT_STFT_WIN,
-            stft_hop: int = DEFAULT_STFT_HOP,
-            stft_nmels: int = DEFAULT_N_MELS,
-            mel_f_min: int = DEFAULT_MEL_F_MIN,
+            stft_nfft: int = constants.DEFAULT_STFT_N_FFT,
+            stft_win: int = constants.DEFAULT_STFT_WIN,
+            stft_hop: int = constants.DEFAULT_STFT_HOP,
+            stft_nmels: int = constants.DEFAULT_N_MELS,
+            mel_f_min: int = constants.DEFAULT_MEL_F_MIN,
             predefined_model=None,
             audio_augmentations: List[str] = (),
             spectrogram_augmentations: List[str] = ()
@@ -53,24 +48,24 @@ class Trainer:
         }
         self.predefined_model = None
         if predefined_model:
-            self.predefined_model = AVAILABLE_MODELS[predefined_model](
+            self.predefined_model = constants.AVAILABLE_MODELS[predefined_model](
                 include_top=False,
                 pooling='avg',
                 weights=None
             )
         for audio_augmentation in audio_augmentations:
-            if audio_augmentation not in AVAILABLE_AUDIO_AUGMENTATIONS:
+            if audio_augmentation not in constants.AVAILABLE_AUDIO_AUGMENTATIONS:
                 raise ValueError(f"Audio augmentation {audio_augmentation} not available")
         self.audio_augmentations = [
-            AVAILABLE_AUDIO_AUGMENTATIONS[audio_augmentation]()
+            constants.AVAILABLE_AUDIO_AUGMENTATIONS[audio_augmentation]()
             for audio_augmentation in audio_augmentations
         ]
         for spectrogram_augmentation in spectrogram_augmentations:
-            if spectrogram_augmentation not in AVAILABLE_SPECTROGRAM_AUGMENTATIONS:
+            if spectrogram_augmentation not in constants.AVAILABLE_SPECTROGRAM_AUGMENTATIONS:
                 raise ValueError(f"Spectrogram augmentation {spectrogram_augmentation} not available")
 
         self.spectrogram_augmentations = [
-            AVAILABLE_SPECTROGRAM_AUGMENTATIONS[spectrogram_augmentation]()
+            constants.AVAILABLE_SPECTROGRAM_AUGMENTATIONS[spectrogram_augmentation]()
             for spectrogram_augmentation in spectrogram_augmentations
         ]
 
@@ -89,10 +84,10 @@ class Trainer:
             val_size: float = 0.2,
             optimizer: str = None,
             learning_rate: float = 0.001,
-            batch_size: int = DEFAULT_BATCH_SIZE,
-            epochs: int = DEFAULT_EPOCHS,
-            checkpoints_folder: str = CHECKPOINTS_FOLDER,
-            model_id: str = "model_id"
+            batch_size: int = constants.DEFAULT_BATCH_SIZE,
+            epochs: int = constants.DEFAULT_EPOCHS,
+            checkpoints_folder: str = constants.CHECKPOINTS_FOLDER,
+            model_id: str = "model_id",
             early_stopping_patience: int = constants.DEFAULT_EARLY_STOPPING_PATIENCE,
             reduce_lr_on_plateau_patience: int = constants.DEFAULT_REDUCE_LR_ON_PLATEAU_PATIENCE,
     ) -> Tuple[str, str, tf.keras.callbacks.History]:
@@ -115,7 +110,7 @@ class Trainer:
 
         # Prepare model optimizer
         if optimizer:
-            optimizer = AVAILABLE_KERAS_OPTIMIZERS[optimizer]
+            optimizer = constants.AVAILABLE_KERAS_OPTIMIZERS[optimizer]
         else:
             optimizer = tf.keras.optimizers.Adam
         model.compile(

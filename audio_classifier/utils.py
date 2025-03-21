@@ -1,9 +1,9 @@
+import logging
 from typing import Union
 import soxr
-from pydub import AudioSegment
 import numpy as np
-from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_WINDOW, DEFAULT_STEP
-import logging
+from pydub import AudioSegment
+from audio_classifier import constants
 
 LOGGER = logging.getLogger("audio_classifier")
 
@@ -28,9 +28,9 @@ class Singleton(type):
 
 def __window(
         x: np.ndarray,
-        window_seconds: float = DEFAULT_WINDOW,
-        step_seconds: float = DEFAULT_STEP,
-        sr: int = DEFAULT_SAMPLE_RATE
+        window_seconds: float = constants.DEFAULT_WINDOW,
+        step_seconds: float = constants.DEFAULT_STEP,
+        sr: int = constants.DEFAULT_SAMPLE_RATE
 ) -> np.ndarray:
     """
     Apply a window to the audio
@@ -60,9 +60,9 @@ def load_audio(audio: Union[str, np.ndarray, AudioSegment], sr: int = 16000, max
 
 def apply_window(
         audio: np.ndarray,
-        window: float = DEFAULT_WINDOW,
-        step: float = DEFAULT_STEP,
-        sr: int = DEFAULT_SAMPLE_RATE,
+        window: float = constants.DEFAULT_WINDOW,
+        step: float = constants.DEFAULT_STEP,
+        sr: int = constants.DEFAULT_SAMPLE_RATE,
         pad_mode="constant"
 ) -> np.ndarray:
     """
