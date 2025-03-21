@@ -181,12 +181,12 @@ This will train a model using the GTZAN Speech & Music classification dataset, t
 In this case we will train a classification model using the GTZAN Genres classification dataset running the following command:
 
 ```bash 
-python main.py train "datasets/GTZAN Genre/Data/genres_original" --model keras.MobileNetV2 --model_id "GTZAN_Genres" -sr 16000 --window 5 --step 2.5 --batch_size 32 --epochs 100 --learning_rate 0.001 --audio_augmentations [WhiteNoiseAugmentation]
+python main.py train "datasets/GTZAN Genre/" --model keras.MobileNetV2 --model_id "GTZAN_Genres" -sr 16000 --window 5 --step 2.5 --batch_size 32 --epochs 100 --learning_rate 0.001 --audio_augmentations [WhiteNoiseAugmentation]
 ```
 
 This model will be capable of classifying audio files into 10 different music genres. In this case we use the folder containing the 10 subfolders, each one containing audio files of a different genre.
 
-The command will run the script on the dataset in the genres_original/ folder, specifying a series of parameters for the model, the sample rate, the window size, and other processing configurations.
+The command will run the script on the dataset in the `datasets/GTZAN Genre` folder, specifying a series of parameters for the model, the sample rate, the window size, and other processing configurations.
 
 ### 4.2. Prediction with Trained Audio Classification Models
 
