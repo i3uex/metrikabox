@@ -1,6 +1,5 @@
 import datetime
-import json
-import os
+from typing import List
 from PIL import Image
 import gradio as gr
 from audio_classifier import Trainer, Dataset
@@ -95,7 +94,18 @@ def train(
     ]
 
 
-def draw_history(history, metric):
+def smooth_line(scalars: List[float], weight: float) -> List[float]:  # Weight between 0 and 1
+    last = scalars[0]  # First value in the plot (first timestep)
+    smoothed = list()
+    for point in scalars:
+        smoothed_val = last * weight + (1 - weight) * point  # Calculate smoothed value
+        smoothed.append(smoothed_val)                        # Save it
+        last = smoothed_val                                  # Anchor the last smoothed value
+
+    return smoothed
+
+
+def draw_history(history, metric, smooth=.8, alpha=0.25):
     """
     Plots the history of the model training
     :param metric: Metric to plot
@@ -105,12 +115,16 @@ def draw_history(history, metric):
     fig, ax = plt.subplots(1, 1)
     if metric == "accuracy":
         metric = 'binary_accuracy' if 'binary_accuracy' in history else 'categorical_accuracy'
-    ax.plot(history[metric])
-    ax.plot(history[f'val_{metric}'])
+    # Plot train data
+    p = ax.plot(history[metric], alpha=alpha, label='_nolegend_')
+    ax.plot(smooth_line(history[metric], smooth), color=p[0].get_color())
+    # Plot validation data
+    p = ax.plot(history[f'val_{metric}'], alpha=alpha, label='_nolegend_')
+    ax.plot(smooth_line(history[f'val_{metric}'], smooth), color=p[0].get_color())
     ax.set_title(f'Model {metric.replace("_", " ").title()}')
     ax.set_ylabel(metric)
     ax.set_xlabel('epoch')
-    ax.legend(['train', 'val'], loc='upper left')
+    ax.legend(['train', 'validation'], loc='upper left')
     return fig
 
 
@@ -121,7 +135,7 @@ def fig2pil(fig):
     :return: PIL image
     """
     fig.canvas.draw()
-    return Image.frombytes('RGB', fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
+    return Image.frombytes('RGBA', fig.canvas.get_width_height(), fig.canvas.buffer_rgba())
 
 
 with gr.Blocks() as demo:
