@@ -12,6 +12,7 @@ This framework allows you to process an audio dataset for classification tasks u
 2. [Datasets and Samples](#2-datasets-and-samples)
 3. [Usage with Gradio](#3-usage-with-gradio)
 4. [Usage with command line arguments](#4-usage-with-command-line-arguments)
+5. [Citing this Work](#5-citing-this-work)
 
 ## 1. Installation Process
 
@@ -80,7 +81,7 @@ You can download four example audio files (taken from [librosa's data][librosa_d
 
 ### 3.1. Training Audio Classification Models
 
-In order to run the audio classification models training interface, run the `demo_train.py` script with the following syntax:
+In order to run the [Gradio][gradio] audio classification models training interface, run the `demo_train.py` script with the following syntax:
 
 ```bash
 python demo_train.py
@@ -88,17 +89,19 @@ python demo_train.py
 
 Open the local URL in your web browser. Set the path to the dataset, select the model to train, and click on the **Train** button. A good starting point could be the folder **datasets/GTZAN Speech_Music** with the model **custom.MNIST_convnet**.
 
-Don't forget to download the model () and the configuration for later use.
+Don't forget to download the model and the configuration for later use.
 
 ### 3.2. Prediction with Trained Audio Classification Models
 
-In order to run the prediction interface with trained audio classification, run the `demo_predict.py` script with the following syntax:
+In order to run the [Gradio][gradio] prediction interface with trained audio classification, run the `demo_predict.py` script with the following syntax:
 
 ```bash
 python demo_infer.py
 ```
 
 Open the local URL in your web browser. Select or record a new audio to classify. Drop the model and its configuration in the corresponding boxes, and click on the **Classify** button.
+
+[gradio]: https://www.gradio.app/ "Build & share delightful machine learning apps"
 
 ## 4. Usage with Command Line Arguments
 
@@ -205,3 +208,23 @@ python main.py infer samples/audio2.ogg checkpoints/GTZAN_Genres.keras checkpoin
 
 - `--model_config_path`: Path to the model configuration file.
 - `--task`: Task to perform with the model (classify or segment). Default: segment
+
+## 5. Citing this Work
+
+This repository contains the code required to reproduce the experiments from our paper, ["Paper"][paper]. If you use this work in your research, please cite it using the following BibTeX entry:
+
+```
+@article{perianezpascual25,
+    title = {MetrikaBox: an open framework for experimenting with audio classification},
+    author = {Perianez-Pascual, Jorge and Gutiérrez, Juan D. and Rodriguez-Echeverria, Roberto and Sánchez Figueroa, Fernando},
+    doi = {10.1000/182},
+    journal = {SoftwareX},
+    langid = {english},
+    month = {January},
+    number = {1},
+    volume = {1},
+    year = {2025}
+}
+```
+
+[paper]: https://doi.org/10.1000/182 "MetrikaBox: an open framework for experimenting with audio classification"

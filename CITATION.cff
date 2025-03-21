@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: If you use this software, please cite both the article from preferred-citation and the software itself.
+authors:
+  - family-names: Perianez-Pascual
+    given-names: Jorge
+  - family-names: Gutiérrez
+    given-names: Juan D.
+  - family-names: Rodriguez-Echeverria
+    given-names: Roberto
+  - family-names: Sánchez Figueroa
+    given-names: Fernando
+title: 'MetrikaBox: an open framework for experimenting with audio classification'
+version: 1.0.0
+doi: 10.1000/182
+date-released: '2025-03-20'
+preferred-citation:
+  authors:
+    - family-names: Perianez-Pascual
+      given-names: Jorge
+    - family-names: Gutiérrez
+      given-names: Juan D.
+    - family-names: Rodriguez-Echeverria
+      given-names: Roberto
+    - family-names: Sánchez Figueroa
+      given-names: Fernando
+  title: 'MetrikaBox: an open framework for experimenting with audio classification'
+  doi: 10.1000/182
+  type: article-journal
+  year: '2025'
+  conference: {}
+  publisher: {}
