@@ -26,7 +26,7 @@ def train(
         stft_nfft,
         stft_win,
         stft_hop,
-        stft_nmels,
+        stft_n_mels,
         mel_f_min,
         audio_augmentations,
         spectrogram_augmentations
@@ -40,13 +40,15 @@ def train(
     :param classes2avoid: Classes to avoid from training model
     :param checkpoints_folder: Path to save the model checkpoints
     :param optimizer: String with the optimizer to use
+    :param batch_size: Number of items to use in each batch
+    :param epochs: Number of epochs to train the model
     :param class_loader: String with the class loader to use
     :param learning_rate: Learning rate for the optimizer
     :param model_id: String with the model id
     :param stft_nfft: Number of FFTs to use
     :param stft_win: Length of the STFT window
     :param stft_hop: Length of the STFT hop
-    :param stft_nmels: Number of mel bands to use
+    :param stft_n_mels: Number of mel bands to use
     :param mel_f_min: Minimum frequency for the mel bands
     :param model: Name of the predefined model to use. Any of keras.applications
     :param audio_augmentations: List of audio augmentations to use
@@ -57,7 +59,7 @@ def train(
         stft_nfft=stft_nfft,
         stft_win=stft_win,
         stft_hop=stft_hop,
-        stft_nmels=stft_nmels,
+        stft_nmels=stft_n_mels,
         mel_f_min=mel_f_min,
         predefined_model=model,
         audio_augmentations=audio_augmentations,

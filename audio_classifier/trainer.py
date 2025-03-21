@@ -2,7 +2,7 @@ import json
 import os
 from typing import List, Tuple, Collection
 import tensorflow as tf
-from sklearn.utils import class_weight
+from sklearn.utils.class_weight import compute_sample_weight
 from sklearn.preprocessing import LabelBinarizer
 
 from audio_classifier import Dataset
@@ -15,9 +15,9 @@ from audio_classifier.constants import AVAILABLE_MODELS, AVAILABLE_AUDIO_AUGMENT
 from audio_classifier.utils import LOGGER
 
 
-def _generate(x: Collection, y: Collection) -> callable:
+def _generate(x: Collection, y: Collection, class_weight='balanced') -> callable:
     def _gen():
-        for _item in zip(x, y, class_weight.compute_sample_weight('balanced', y)):
+        for _item in zip(x, y, compute_sample_weight(class_weight, y)):
             yield _item
 
     return _gen
