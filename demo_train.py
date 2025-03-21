@@ -1,6 +1,4 @@
 import datetime
-from typing import List
-from PIL import Image
 import gradio as gr
 from audio_classifier import Trainer, Dataset
 from audio_classifier.config import DEFAULT_SAMPLE_RATE, CHECKPOINTS_FOLDER, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS
@@ -8,7 +6,7 @@ from audio_classifier.constants import AVAILABLE_KERAS_OPTIMIZERS, AVAILABLE_CLA
     AVAILABLE_AUDIO_AUGMENTATIONS, AVAILABLE_SPECTROGRAM_AUGMENTATIONS
 from audio_classifier.model import DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, \
     DEFAULT_MEL_F_MIN
-import matplotlib.pyplot as plt
+from demo_utils import get_image_from_history
 
 
 def train(
@@ -87,55 +85,11 @@ def train(
         model_id=model_id,
     )
     return [model_checkpoints, model_config_path], [
-        fig2pil(draw_history(history.history, 'accuracy')),
-        fig2pil(draw_history(history.history, 'loss')),
-        fig2pil(draw_history(history.history, 'precision')),
-        fig2pil(draw_history(history.history, 'recall'))
+        get_image_from_history(history.history, 'accuracy'),
+        get_image_from_history(history.history, 'loss'),
+        get_image_from_history(history.history, 'precision'),
+        get_image_from_history(history.history, 'recall')
     ]
-
-
-def smooth_line(scalars: List[float], weight: float) -> List[float]:  # Weight between 0 and 1
-    last = scalars[0]  # First value in the plot (first timestep)
-    smoothed = list()
-    for point in scalars:
-        smoothed_val = last * weight + (1 - weight) * point  # Calculate smoothed value
-        smoothed.append(smoothed_val)                        # Save it
-        last = smoothed_val                                  # Anchor the last smoothed value
-
-    return smoothed
-
-
-def draw_history(history, metric, smooth=.8, alpha=0.25):
-    """
-    Plots the history of the model training
-    :param metric: Metric to plot
-    :param history: History object from keras
-    :return: Figure
-    """
-    fig, ax = plt.subplots(1, 1)
-    if metric == "accuracy":
-        metric = 'binary_accuracy' if 'binary_accuracy' in history else 'categorical_accuracy'
-    # Plot train data
-    p = ax.plot(history[metric], alpha=alpha, label='_nolegend_')
-    ax.plot(smooth_line(history[metric], smooth), color=p[0].get_color())
-    # Plot validation data
-    p = ax.plot(history[f'val_{metric}'], alpha=alpha, label='_nolegend_')
-    ax.plot(smooth_line(history[f'val_{metric}'], smooth), color=p[0].get_color())
-    ax.set_title(f'Model {metric.replace("_", " ").title()}')
-    ax.set_ylabel(metric)
-    ax.set_xlabel('epoch')
-    ax.legend(['train', 'validation'], loc='upper left')
-    return fig
-
-
-def fig2pil(fig):
-    """
-    Converts a matplotlib figure to a PIL image
-    :param fig: Figure to convert
-    :return: PIL image
-    """
-    fig.canvas.draw()
-    return Image.frombytes('RGBA', fig.canvas.get_width_height(), fig.canvas.buffer_rgba())
 
 
 with gr.Blocks() as demo:
