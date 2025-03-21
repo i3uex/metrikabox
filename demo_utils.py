@@ -29,8 +29,6 @@ def draw_history(history, metric, smooth=.8, alpha=0.25):
     :return: Figure
     """
     fig, ax = plt.subplots(1, 1)
-    if metric == "accuracy":
-        metric = 'binary_accuracy' if 'binary_accuracy' in history else 'categorical_accuracy'
     # Plot train data
     p = ax.plot(history[metric], alpha=alpha, label='_nolegend_')
     ax.plot(smooth_line(history[metric], smooth), color=p[0].get_color())

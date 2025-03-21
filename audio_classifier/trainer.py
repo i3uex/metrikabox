@@ -117,9 +117,9 @@ class Trainer:
             optimizer(learning_rate=learning_rate),
             loss="categorical_crossentropy" if num_classes > 2 else "binary_crossentropy",
             weighted_metrics=[
-                tf.keras.metrics.CategoricalAccuracy() if num_classes > 2 else tf.keras.metrics.BinaryAccuracy(),
-                tf.keras.metrics.Precision(),
-                tf.keras.metrics.Recall()
+                tf.keras.metrics.CategoricalAccuracy(name="accuracy") if num_classes > 2 else tf.keras.metrics.BinaryAccuracy(name="accuracy"),
+                tf.keras.metrics.Precision(name="precision"),
+                tf.keras.metrics.Recall(name="recall")
             ]
         )
 
@@ -161,7 +161,7 @@ class Trainer:
         if early_stopping_patience > 0:
             callbacks.append(
                 tf.keras.callbacks.EarlyStopping(
-                    monitor='val_categorical_accuracy' if num_classes > 2 else 'val_binary_accuracy',
+                    monitor='val_accuracy' if num_classes > 2 else 'val_accuracy',
                     min_delta=0.025,
                     verbose=1,
                     patience=early_stopping_patience
