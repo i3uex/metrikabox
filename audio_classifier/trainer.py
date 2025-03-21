@@ -136,7 +136,7 @@ class Trainer:
         train_dataset = tf.data.Dataset.from_generator(
             _generate(x[:train_num_items], y[:train_num_items]),
             output_signature=output_signature,
-        ).shuffle(train_num_items // 10).batch(batch_size, drop_remainder=True)
+        ).shuffle(train_num_items).batch(batch_size, drop_remainder=True)
 
         val_dataset = tf.data.Dataset.from_generator(
             _generate(x[train_num_items:], y[train_num_items:]),
