@@ -68,7 +68,13 @@ Follow these steps to get your computer ready to use this project:
 
 ## 2. Datasets and Samples
 
-You can download two example datasets ([GTZAN Speech & Music][gtzan_musicspeech_collection] and [GTZAN Genres][gtzan]) by running the script `bash download_datasets.sh`.
+In order to properly download the datasets, you must have `unzip` installed on your system. If you don't have it, you can install it with the following command:
+
+```bash
+sudo apt install unzip
+```
+
+Then, you can download two example datasets ([GTZAN Speech & Music][gtzan_musicspeech_collection] and [GTZAN Genres][gtzan]) by running the script `bash download_datasets.sh`.
 
 [gtzan_musicspeech_collection]: https://www.kaggle.com/datasets/lnicalo/gtzan-musicspeech-collection "GTZAN music/speech collection"
 [gtzan]: https://www.kaggle.com/datasets/andradaolteanu/gtzan-dataset-music-genre-classification "GTZAN Dataset - Music Genre Classification"
