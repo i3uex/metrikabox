@@ -1,0 +1,15 @@
+{
+    "editor.renderWhitespace": "all",
+    "editor.rulers": [60, 80],
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "cSpell.enabled": false,
+    "ltex.language": "es",
+    "python.analysis.typeCheckingMode": "basic",
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.autopep8",
+        "editor.formatOnSave": true
+    }
+}
