@@ -87,9 +87,11 @@ class Trainer:
             batch_size: int = constants.DEFAULT_BATCH_SIZE,
             epochs: int = constants.DEFAULT_EPOCHS,
             checkpoints_folder: str = constants.CHECKPOINTS_FOLDER,
-            model_id: str = "model_id",
+            model_id: str = constants.DEFAULT_MODEL_ID,
             early_stopping_patience: int = constants.DEFAULT_EARLY_STOPPING_PATIENCE,
             reduce_lr_on_plateau_patience: int = constants.DEFAULT_REDUCE_LR_ON_PLATEAU_PATIENCE,
+            checkpoint_metric=constants.DEFAULT_CHECKPOINT_METRIC,
+            early_stopping_metric=constants.DEFAULT_EARLY_STOPPING_METRIC,
     ) -> Tuple[str, str, tf.keras.callbacks.History]:
 
         x, y = dataset.load()
@@ -150,8 +152,7 @@ class Trainer:
         callbacks = [
             tf.keras.callbacks.ModelCheckpoint(
                 filepath=checkpoint_filepath,
-                monitor='val_loss',
-                mode='min',
+                monitor=checkpoint_metric,
                 save_best_only=True
             ),
               tf.keras.callbacks.TensorBoard(
@@ -161,9 +162,9 @@ class Trainer:
         if early_stopping_patience > 0:
             callbacks.append(
                 tf.keras.callbacks.EarlyStopping(
-                    monitor='val_accuracy' if num_classes > 2 else 'val_accuracy',
-                    min_delta=0.025,
                     verbose=1,
+                    min_delta=0.025,
+                    monitor=early_stopping_metric,
                     patience=early_stopping_patience
                 )
             )

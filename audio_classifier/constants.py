@@ -5,11 +5,15 @@ from inspect import getmembers, isfunction, isclass
 DEFAULT_SAMPLE_RATE = 16000  # Sample rate the audio will be converted to when training/predicting
 DEFAULT_WINDOW = 2  # Context (in seconds) for the audio processing
 DEFAULT_STEP = 1  # Every how many seconds the audio processing will be done
+# Training hyperparams
 DEFAULT_BATCH_SIZE = 32
 DEFAULT_EPOCHS = 250
+DEFAULT_LR = 0.001
 DEFAULT_EARLY_STOPPING_PATIENCE = 25
 DEFAULT_REDUCE_LR_ON_PLATEAU_PATIENCE = 10
-DEFAULT_LR = 0.001
+DEFAULT_CHECKPOINT_METRIC = "val_loss"
+DEFAULT_EARLY_STOPPING_METRIC = "val_accuracy"
+DEFAULT_MODEL_ID = "model_id"
 CHECKPOINTS_FOLDER = "checkpoints"
 MODEL_CONFIG_FOLDER = "model_config"
 
