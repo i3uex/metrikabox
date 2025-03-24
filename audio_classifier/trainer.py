@@ -181,4 +181,7 @@ class Trainer:
             epochs=epochs,
             callbacks=callbacks
         )
+        os.makedirs("histories", exist_ok=True)
+        with open(f'histories/{model_id}_history.json', "w") as f:
+            json.dump(history.history, f, default=str)
         return checkpoint_filepath, model_config_path, history
