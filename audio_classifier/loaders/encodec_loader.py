@@ -8,8 +8,8 @@ from encodec.model import EncodecModel
 from audio_classifier.loaders import BaseLoader
 
 MODELS = {
-    'encodec_24khz': EncodecModel.encodec_model_24khz,
-    'encodec_48khz': EncodecModel.encodec_model_48khz,
+    'encodec_24khz': EncodecModel.encodec_model_24khz(),
+    'encodec_48khz': EncodecModel.encodec_model_48khz(),
 }
 
 MODELS2SR = {
@@ -17,17 +17,18 @@ MODELS2SR = {
     'encodec_48khz': 150,
 }
 
+
 class EncodecLoader(BaseLoader):
 
     def __init__(self, model: str=list(MODELS.keys())[0], decode=False, expected_codebooks=None, **kwargs):
         super().__init__(**kwargs)
-        self.model = model
+        self.model_name = model
         self.expected_codebooks = expected_codebooks if expected_codebooks else (4 if model == 'encodec_48khz' else 8)
         self.window_frames = self.window * MODELS2SR[model]
         self.step_frames = self.step * MODELS2SR[model]
         self.decode = decode
 
-    def decompress_from_file(self, fo: tp.IO[bytes], device='cuda') -> tp.Tuple[torch.Tensor, int, int]:
+    def decompress_from_file(self, fo: tp.IO[bytes], device='cpu') -> tp.Tuple[torch.Tensor, int, int]:
         """Decompress from a file-object.
         Returns a tuple `(wav, sample_rate)`.
 
@@ -41,15 +42,15 @@ class EncodecLoader(BaseLoader):
         audio_length = metadata['al']
         num_codebooks = metadata['nc']
         use_lm = metadata['lm']
-        if model_name != self.model:
-            raise ValueError(f"Model mismatch: {model_name} != {self.model}")
+        if model_name != self.model_name:
+            raise ValueError(f"Model mismatch: {model_name} != {self.model_name}")
         assert isinstance(audio_length, int)
         assert isinstance(num_codebooks, int)
-        if num_codebooks != self.expected_codebooks:
-            raise ValueError(f"Expected {self.expected_codebooks} codebooks, got {num_codebooks}.")
+        if not self.decode and num_codebooks != self.expected_codebooks:
+            raise ValueError(f"Expected {self.expected_codebooks} codebooks, got {num_codebooks} with decoding disabled")
         if model_name not in MODELS:
             raise ValueError(f"The audio was compressed with an unsupported model {model_name}.")
-        model = MODELS[model_name]().to(device)
+        model = MODELS[model_name]
         if use_lm:
             lm = model.get_lm_model()
 
@@ -97,14 +98,14 @@ class EncodecLoader(BaseLoader):
         # Or normalize array data
         else:
             frames = frames / model.quantizer.bins
-        return frames[0].T, MODELS2SR[model_name], num_codebooks
+        return frames[0].T, MODELS2SR[model_name], 128 if self.decode else num_codebooks
 
     def _window(self, a, shape):
         s = (a.shape[0] - shape[0] + 1,) + (a.shape[1] - shape[1] + 1,) + shape
         strides = a.strides + a.strides
         return np.lib.stride_tricks.as_strided(a, shape=s, strides=strides)
 
-    def load_enc(self, file):
+    def load(self, file):
         with open(file, 'rb') as f:
             x, sr, item_len = self.decompress_from_file(f)
         return self._window(x, (self.window_frames, item_len))[::self.step_frames, 0]
