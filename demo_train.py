@@ -1,8 +1,16 @@
 import datetime
 import gradio as gr
+import numpy as np
 from audio_classifier import constants
-from audio_classifier import Trainer, Dataset
+from audio_classifier import Trainer
+from audio_classifier.dataset import AudioDataset, EncodecDataset
 from demo_utils import get_image_from_history
+
+
+TYPE2DATASET = {
+    "Audio": AudioDataset,
+    "Encodec": EncodecDataset
+}
 
 
 def train(
@@ -30,6 +38,10 @@ def train(
         early_stopping_patience,
         early_stopping_metric,
         checkpoint_metric,
+        encodec_model,
+        encodec_decode,
+        bandwidth,
+        dataset_type
 ):
     """
     Trains the model
@@ -60,22 +72,25 @@ def train(
     :return:
     """
     trainer = Trainer(
+        predefined_model=model,
+        audio_augmentations=audio_augmentations,
+        spectrogram_augmentations=spectrogram_augmentations
+    )
+    dataset = TYPE2DATASET[dataset_type](
+        folder=folder,
+        sample_rate=sample_rate,
+        window=window,
+        step=step,
         stft_nfft=stft_nfft,
         stft_win=stft_win,
         stft_hop=stft_hop,
         stft_nmels=stft_n_mels,
         mel_f_min=mel_f_min,
-        predefined_model=model,
-        audio_augmentations=audio_augmentations,
-        spectrogram_augmentations=spectrogram_augmentations
-    )
-    dataset = Dataset(
-        folder,
-        sample_rate=sample_rate,
-        window=window,
-        step=step,
         classes2avoid=classes2avoid.split(",") if classes2avoid else [],
-        class_loader=class_loader
+        class_loader=class_loader,
+        model=encodec_model,
+        decode=encodec_decode,
+        bandwidth=bandwidth
     )
     if not model_id:
         folder_name = folder.rsplit("/")[-1] if folder[-1] != "/" else folder.rsplit("/")[-2]
@@ -96,7 +111,7 @@ def train(
     )
     return [model_checkpoints, model_config_path], [
         (get_image_from_history(history.history, 'accuracy'), "Model Accuracy"),
-        (get_image_from_history(history.history, 'loss'), "Model Loss"),
+        (get_image_from_history(history.history, 'loss', best_metric_fn=np.argmin, percentage=False), "Model Loss"),
         (get_image_from_history(history.history, 'precision'), "Model Precision"),
         (get_image_from_history(history.history, 'recall'), "Model Recall")
     ]
@@ -112,8 +127,23 @@ def main():
         inp = []
         with gr.Row():
             with gr.Column():
-                inp.append(gr.Textbox(placeholder="/path/to/dataset", label="Dataset Path"))
-                inp.append(gr.Dropdown(choices=sorted(constants.AVAILABLE_MODELS.keys()), value="custom.MNIST_convnet", label="Model to train"))  # model
+                inp.append(gr.Textbox(
+                    placeholder="/path/to/dataset",
+                    info="Path to the directory containing the folders with the class labels. Each folder must contain the audio files of a single class",
+                    label="Dataset Path"
+                ))
+                dataset_type = gr.Dropdown(
+                    label="Dataset format",
+                    info="Format of files in the dataset",
+                    choices=["Audio", "Encodec"],
+                    value="Audio"
+                )
+                inp.append(gr.Dropdown(
+                    label="Model to train",
+                    info="Predefined model to train with the selected dataset",
+                    choices=sorted(constants.AVAILABLE_MODELS.keys()),
+                    value="custom.MNIST_convnet",
+                ))  # model
             with gr.Column():
                 out = [
                     gr.File(label="Model"),
@@ -121,14 +151,8 @@ def main():
                 ]
         btn = gr.Button("Train")
         with gr.Accordion("Aditional training params", open=False):
-            with gr.Accordion("Audio params", open=False):
+            with gr.Accordion("Model params", open=False):
                 with gr.Row():
-                    sample_rate = gr.Dropdown(
-                        label="Sampling rate",
-                        info="Sampling rate the audios will be converted to",
-                        choices=[8000, 16000, 22050, 32000, 44100],
-                        value=constants.DEFAULT_SAMPLE_RATE
-                    )
                     window = gr.Slider(
                         label="Window",
                         info="Seconds of audio to use for each item",
@@ -144,7 +168,14 @@ def main():
                         value=constants.DEFAULT_STEP
                     )
 
+            with gr.Accordion("Audio params", open=False) as a:
                 with gr.Row():
+                    sample_rate = gr.Dropdown(
+                        label="Sampling rate",
+                        info="Sampling rate the audios will be converted to",
+                        choices=[8000, 16000, 22050, 32000, 44100],
+                        value=constants.DEFAULT_SAMPLE_RATE
+                    )
                     stft_nfft = gr.Number(
                         label="STFT number FFT",
                         info="Number of FFTs to use",
@@ -170,6 +201,41 @@ def main():
                         info="Minimum frequency for the mel bands",
                         value=constants.DEFAULT_MEL_F_MIN
                     )
+
+                def update_audio_params_visibility(type):  # Accept the event argument, even if not used
+                    if type == 'Audio':
+                        return gr.update(visible=True)
+                    else:
+                        return gr.update(visible=False)
+                dataset_type.change(update_audio_params_visibility, dataset_type, a)
+
+            with gr.Accordion("Encodec params", open=False, visible=False) as a:
+                with gr.Row():
+                    encodec_model = gr.Dropdown(
+                        label="Encodec model",
+                        info="Model the audios where encoded with",
+                        choices=['encodec_24khz', 'encodec_48khz'],
+                        value='encodec_24khz'
+                    )
+                    encodec_decode = gr.Checkbox(
+                        label="Decode",
+                        info="Whether if the audio should be decoded. Increases latent space",
+                        value=True,
+                        visible=False
+                    )
+                    bandwidth = gr.Dropdown(
+                        label="Bandwidth",
+                        info="Bandwidth the audio was encoded to",
+                        choices=[1.5, 3.0, 6.0, 12.0, 24.0],
+                        value=6.
+                    )
+                def update_encodec_params_visibility(type):  # Accept the event argument, even if not used
+                    if type == 'Encodec':
+                        return gr.update(visible=True)
+                    else:
+                        return gr.update(visible=False)
+                dataset_type.change(update_encodec_params_visibility, dataset_type, a)
+
             with gr.Accordion("Dataset params", open=False):
                 with gr.Row():
                     class_loader = gr.Dropdown(
@@ -266,7 +332,7 @@ def main():
                 sample_rate, window, step, classes2avoid, checkpoints_folder, optimizer, batch_size, epochs,
                 class_loader, learning_rate, model_id, stft_nfft, stft_win, stft_hop, stft_n_mels, mel_f_min,
                 audio_augmentations, spectrogram_augmentations, reduce_lr_patience, early_stopping_patience,
-                early_stopping_metric, checkpoint_metric
+                early_stopping_metric, checkpoint_metric, encodec_model, encodec_decode, bandwidth, dataset_type
             ])
         btn.click(fn=train, inputs=inp, outputs=out)
 
