@@ -1,8 +1,7 @@
-from typing import List, Union
+from abc import abstractmethod
+from typing import List
 import keras
-import numpy as np
 import tensorflow as tf
-from pydub import AudioSegment
 from audio_classifier import constants
 from audio_classifier.loaders import FileLoader
 from audio_classifier.model.classification import MNIST_convnet
@@ -27,7 +26,6 @@ class NormLayer(keras.layers.Layer):
 
 def get_classification_model(
         num_classes: int,
-        input_shape: tuple,
         predefined_model: keras.models.Model = DEFAULT_PREDEFINED_MODEL
 ) -> keras.models.Model:
     """
@@ -37,18 +35,55 @@ def get_classification_model(
     :param predefined_model: Model to use as base for the classification model
     :return: Classification model
     """
-    input_tensor = keras.layers.Input(shape=input_shape)
-    convolution_layer = keras.layers.Conv2D(3, 1, padding='same')(input_tensor)  # X has a dimension of (IMG_SIZE,N_MELS,3)
-    base_model = predefined_model
-    for layer in base_model.layers:
+    model = keras.models.Sequential()
+    for layer in predefined_model.layers:
         layer.trainable = True  # trainable has to be false in order to freeze the layers
-    base_model = base_model(convolution_layer)
-    output_tensor = keras.layers.Dense(num_classes if num_classes > 2 else 1,
-                                 activation='softmax' if num_classes > 2 else 'sigmoid')(base_model)
-    return keras.models.Model(inputs=input_tensor, outputs=output_tensor)
+    model.add(predefined_model)
+    model.add(keras.layers.Dense(num_classes if num_classes > 2 else 1, activation='softmax' if num_classes > 2 else 'sigmoid'))
+    return model
 
 
-class AudioModelBuilder:
+class ModelBuilder:
+
+    def __init__(self, window: float = constants.DEFAULT_WINDOW, step: float = constants.DEFAULT_STEP, **kwargs):
+        self.window = window
+        self.step = step
+
+
+    @abstractmethod
+    def get_preprocessing_layer(
+            self,
+            audio_augmentations: List[AudioAugmentationLayer] = (),
+            spectrum_augmentations: List[SpectrogramAugmentationLayer] = ()
+        ):
+        return keras.models.Sequential()
+
+    def get_model(
+            self,
+            num_classes: int,
+            predefined_model: keras.models.Model = None,
+            **kwargs
+    ) -> keras.models.Model:
+        """
+        Get a model
+        :param num_classes: number of classes to predict
+        :param predefined_model: model to use as base for the classification model
+        :param audio_augmentations: list of audio augmentations to apply
+        :param spectrum_augmentations: list of spectrum augmentations to apply
+        :return: Keras model
+        """
+        model = keras.models.Sequential()
+        model.add(self.get_preprocessing_layer(**kwargs))
+        model.add(
+            get_classification_model(
+                num_classes,
+                predefined_model=predefined_model
+            )
+        )
+        return model
+
+
+class AudioModelBuilder(ModelBuilder):
     """
     Class to build audio models
     """
@@ -56,13 +91,12 @@ class AudioModelBuilder:
     def __init__(
             self,
             sample_rate: int = constants.DEFAULT_SAMPLE_RATE,
-            window: float = constants.DEFAULT_WINDOW,
-            step: float = constants.DEFAULT_STEP,
             mel_f_min: int = constants.DEFAULT_MEL_F_MIN,
             stft_nfft: int = constants.DEFAULT_STFT_N_FFT,
             stft_window: int = constants.DEFAULT_STFT_WIN,
             stft_hop: int = constants.DEFAULT_STFT_HOP,
-            stft_nmels: int = constants.DEFAULT_N_MELS
+            stft_nmels: int = constants.DEFAULT_N_MELS,
+            **kwargs
     ):
         """
         Class to build audio models
@@ -75,15 +109,13 @@ class AudioModelBuilder:
         :param stft_hop: hop for the stft
         :param stft_nmels: number of mels for the stft
         """
+        super().__init__(**kwargs)
         self.sample_rate = sample_rate
-        self.window = window
-        self.step = step
         self.mel_f_min = mel_f_min
         self.stft_nfft = stft_nfft
         self.stft_window = stft_window
         self.stft_hop = stft_hop
         self.stft_nmels = stft_nmels
-        self.file_loader = FileLoader(sample_rate=self.sample_rate, window=self.window, step=self.step)
 
     def get_melspectrogram(self) -> keras.Layer:
         """
@@ -100,24 +132,12 @@ class AudioModelBuilder:
             power_to_db=False
         )
 
-    def get_model(
+    def get_preprocessing_layer(
             self,
-            num_classes: int,
-            predefined_model: keras.models.Model = None,
             audio_augmentations: List[AudioAugmentationLayer] = (),
             spectrum_augmentations: List[SpectrogramAugmentationLayer] = ()
-        ) -> keras.models.Model:
-        """
-        Get a model
-        :param num_classes: number of classes to predict
-        :param predefined_model: model to use as base for the classification model
-        :param audio_augmentations: list of audio augmentations to apply
-        :param spectrum_augmentations: list of spectrum augmentations to apply
-        :return: Keras model
-        """
-        if not predefined_model:
-            predefined_model = DEFAULT_PREDEFINED_MODEL
-        model = keras.models.Sequential()
+        ):
+        model = super().get_preprocessing_layer(audio_augmentations, spectrum_augmentations)
         model.add(NormLayer())
         for augment in audio_augmentations:
             model.add(augment)
@@ -127,17 +147,30 @@ class AudioModelBuilder:
         model.add(keras.layers.Reshape(input_shape))
         for augment in spectrum_augmentations:
             model.add(augment)
-        model.add(
-            get_classification_model(
-                num_classes,
-                input_shape=input_shape,
-                predefined_model=predefined_model
-            )
-        )
+        model.add(keras.layers.Conv2D(3, 1, padding='same'))
         return model
 
-    def load_file(self, audio_file: Union[str, np.array, AudioSegment]) -> np.ndarray:
-        return self.file_loader.load(audio_file)
+
+class EncodecModelBuilder(ModelBuilder):
+    """
+    Class to build audio models
+    """
+
+    def __init__(
+            self,
+            **kwargs
+    ):
+        super().__init__(**kwargs)
+
+    def get_preprocessing_layer(
+            self,
+            audio_augmentations: List[AudioAugmentationLayer] = (),
+            spectrum_augmentations: List[SpectrogramAugmentationLayer] = ()
+        ):
+        model = super().get_preprocessing_layer(audio_augmentations, spectrum_augmentations)
+        model.add(keras.layers.Lambda(lambda x: tf.keras.backend.expand_dims(x, -1)))
+        model.add(keras.layers.Conv2D(3, 1, padding='same'))
+        return model
 
 
 if __name__ == '__main__':
