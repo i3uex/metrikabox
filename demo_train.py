@@ -96,7 +96,7 @@ def train(
     )
     return [model_checkpoints, model_config_path], [
         (get_image_from_history(history.history, 'accuracy'), "Model Accuracy"),
-        (get_image_from_history(history.history, 'loss'), "Model Loss"),
+        (get_image_from_history(history.history, 'loss', best_metric_fn=np.argmin, percentage=False), "Model Loss"),
         (get_image_from_history(history.history, 'precision'), "Model Precision"),
         (get_image_from_history(history.history, 'recall'), "Model Recall")
     ]
