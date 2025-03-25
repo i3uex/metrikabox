@@ -101,10 +101,8 @@ class Trainer:
         y = encoder.fit_transform(y)
         num_classes = len(encoder.classes_)
         model_config = self.model_config.copy()
+        model_config.update(dataset.get_config())
         model_config.update({
-            "sample_rate": dataset.sample_rate,
-            "window": dataset.window,
-            "step": dataset.step,
             "classes": encoder.classes_.tolist()
         })
         model_config_path = _dump_model_config(model_id, model_config)
@@ -127,7 +125,7 @@ class Trainer:
 
         # Prepare model output signature
         output_signature = (
-            tf.TensorSpec(shape=(int(dataset.sample_rate * dataset.window)), dtype=tf.int16),
+            dataset.get_output_signature(),
             tf.TensorSpec(shape=(num_classes if num_classes > 2 else 1), dtype=tf.int64),
             tf.TensorSpec(shape=(), dtype=tf.float64)
         )

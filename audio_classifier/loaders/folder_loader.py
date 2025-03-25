@@ -8,7 +8,7 @@ import numpy as np
 from tqdm import tqdm
 from audio_classifier import constants
 from audio_classifier.utils import LOGGER
-from audio_classifier.loaders.file_loader import FileLoader
+from audio_classifier.loaders import BaseLoader, FileLoader
 from audio_classifier.loaders.class_loader import ClassLoader
 
 BASE_PATH = ''
@@ -17,10 +17,9 @@ BASE_PATH = ''
 class FolderLoader:
     def __init__(
             self,
-            sample_rate: int = constants.DEFAULT_SAMPLE_RATE,
-            window: float = constants.DEFAULT_WINDOW,
-            step: float = constants.DEFAULT_STEP,
+            file_loader: BaseLoader = None,
             class_loader: ClassLoader = ClassLoader(),
+            audio_formats: Collection[str] = (".wav", ".mp3")
     ):
         """
         Class to load audio files from a folder
@@ -31,18 +30,22 @@ class FolderLoader:
         """
         self.Y = []
         self.X = []
-        self.sr = sample_rate
-        self.window = window
-        self.step = step
         self.class_loader = class_loader
-        self.file_loader = FileLoader(sample_rate=self.sr, window=self.window, step=self.step)
+        if not file_loader:
+            file_loader = FileLoader(
+                sample_rate=constants.DEFAULT_SAMPLE_RATE,
+                window=constants.DEFAULT_WINDOW,
+                step=constants.DEFAULT_STEP
+            )
+            print("File loader not provided. Using default file loader")
+        self.file_loader = file_loader
+        self.audio_formats = audio_formats
 
     def load(
             self,
             folder: str,
             max_files: int = None,
             classes2avoid: Collection[str] = (),
-            audio_formats: Collection[str] = (".wav", ".mp3")
     ) -> Tuple[Collection[np.ndarray], Collection[str]]:
         """
         Load audio files from a folder
@@ -59,7 +62,7 @@ class FolderLoader:
         items = list(
             filter(
                 lambda item: not os.path.isdir(item) and (
-                    any([item.lower().endswith(f) for f in audio_formats]) if audio_formats else True
+                    any([item.lower().endswith(f) for f in self.audio_formats]) if self.audio_formats else True
                 ),
                 glob.glob(folder + '**', recursive=True)
             )
