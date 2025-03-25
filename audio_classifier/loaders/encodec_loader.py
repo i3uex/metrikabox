@@ -12,20 +12,17 @@ MODELS = {
     'encodec_48khz': EncodecModel.encodec_model_48khz(),
 }
 
-MODELS2SR = {
-    'encodec_24khz': 75,
-    'encodec_48khz': 150,
-}
-
 
 class EncodecLoader(BaseLoader):
 
-    def __init__(self, model: str=list(MODELS.keys())[0], decode=False, expected_codebooks=None, **kwargs):
+    def __init__(self, model: str=list(MODELS.keys())[0], decode=False, bandwidth=None, **kwargs):
         super().__init__(**kwargs)
         self.model_name = model
-        self.expected_codebooks = expected_codebooks if expected_codebooks else (4 if model == 'encodec_48khz' else 8)
-        self.window_frames = self.window * MODELS2SR[model]
-        self.step_frames = self.step * MODELS2SR[model]
+        self.bandwidth = bandwidth
+        model = MODELS[model]
+        self.expected_codebooks = model.quantizer.get_num_quantizers_for_bandwidth(model.frame_rate, bandwidth)
+        self.window_frames = self.window * model.frame_rate
+        self.step_frames = self.step * model.frame_rate
         self.decode = decode
 
     def decompress_from_file(self, fo: tp.IO[bytes], device='cpu') -> tp.Tuple[torch.Tensor, int, int]:
@@ -98,7 +95,7 @@ class EncodecLoader(BaseLoader):
         # Or normalize array data
         else:
             frames = frames / model.quantizer.bins
-        return frames[0].T, MODELS2SR[model_name], 128 if self.decode else num_codebooks
+        return frames[0].T, model.frame_rate, 128 if self.decode else num_codebooks
 
     def _window(self, a, shape):
         s = (a.shape[0] - shape[0] + 1,) + (a.shape[1] - shape[1] + 1,) + shape
@@ -114,13 +111,13 @@ class EncodecLoader(BaseLoader):
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     encl = EncodecLoader(window=2, step=1)
-    w = encl.load_enc("/home/dejavu/repos/AudioClassifierRepo/out.ecdc")
+    w = encl.load("/home/dejavu/repos/AudioClassifierRepo/out.ecdc")
     encl = EncodecLoader(window=2, step=1, decode=True)
-    w = encl.load_enc("/home/dejavu/repos/AudioClassifierRepo/out.ecdc")
+    w = encl.load("/home/dejavu/repos/AudioClassifierRepo/out.ecdc")
     encl = EncodecLoader(window=2, step=1, model='encodec_48khz')
-    w = encl.load_enc("/home/dejavu/repos/AudioClassifierRepo/samples/concatenated.ecdc")
+    w = encl.load("/home/dejavu/repos/AudioClassifierRepo/samples/concatenated.ecdc")
     encl = EncodecLoader(window=2, step=1, model='encodec_48khz', decode=True)
-    w = encl.load_enc("/home/dejavu/repos/AudioClassifierRepo/samples/concatenated.ecdc")
+    w = encl.load("/home/dejavu/repos/AudioClassifierRepo/samples/concatenated.ecdc")
 
     for i in range(3):
         plt.imshow(w[i], aspect='auto')

@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from typing import List
 import keras
 import tensorflow as tf
@@ -43,7 +43,7 @@ def get_classification_model(
     return model
 
 
-class ModelBuilder:
+class ModelBuilder(ABC):
 
     def __init__(self, window: float = constants.DEFAULT_WINDOW, step: float = constants.DEFAULT_STEP, **kwargs):
         self.window = window
