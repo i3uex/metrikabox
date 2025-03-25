@@ -1,7 +1,9 @@
+from abc import abstractmethod, ABC
 import numpy as np
 from .. import constants
 
-class BaseLoader:
+
+class BaseLoader(ABC):
     """
     Base class to load audio files
     """
@@ -9,5 +11,6 @@ class BaseLoader:
         self.window = window
         self.step = step
 
+    @abstractmethod
     def load(self, audio: str) -> np.ndarray:
         pass
