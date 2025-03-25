@@ -95,10 +95,10 @@ def train(
         early_stopping_metric=early_stopping_metric,
     )
     return [model_checkpoints, model_config_path], [
-        get_image_from_history(history.history, 'accuracy'),
-        get_image_from_history(history.history, 'loss'),
-        get_image_from_history(history.history, 'precision'),
-        get_image_from_history(history.history, 'recall')
+        (get_image_from_history(history.history, 'accuracy'), "Model Accuracy"),
+        (get_image_from_history(history.history, 'loss'), "Model Loss"),
+        (get_image_from_history(history.history, 'precision'), "Model Precision"),
+        (get_image_from_history(history.history, 'recall'), "Model Recall")
     ]
 
 

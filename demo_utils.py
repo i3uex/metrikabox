@@ -86,7 +86,6 @@ def draw_history(history, metric, best_metric_fn, percentage, smooth=.8, alpha=0
     p = ax.plot(history[val_metric], alpha=alpha, label='_nolegend_')
     val_metric_color = p[0].get_color()
     ax.plot(smooth_line(history[val_metric], smooth), color=val_metric_color)
-    ax.set_title(f'Model {metric.replace("_", " ").title()}')
     ax.set_ylabel(metric.capitalize())
     ax.set_xlabel('Epoch')
     best_val_metric_epoch = best_metric_fn(history[val_metric])
@@ -100,7 +99,11 @@ def draw_history(history, metric, best_metric_fn, percentage, smooth=.8, alpha=0
                 verticalalignment='bottom',
                 arrowprops=dict(facecolor='black', shrink=0.0625, width=1, headwidth=7.5))
     ax.scatter(best_val_metric_epoch, best_val_metric, color=val_metric_color, marker='x', s=100)
-    ax.legend(['train', 'validation'], loc='upper left')
+    ax.legend(['Train', 'Validation'], loc='upper left')
+    ratio = 3/4
+    xleft, xright = ax.get_xlim()
+    ybottom, ytop = ax.get_ylim()
+    ax.set_aspect(abs((xright - xleft) / (ybottom - ytop)) * ratio)
     return fig
 
 
