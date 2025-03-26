@@ -129,14 +129,14 @@ class EncodecDataset(Dataset):
         config.update({
             "model": self.file_loader.model_name,
             "decode": self.file_loader.decode,
-            "expected_codebooks": self.file_loader.expected_codebooks
+            "expected_codebooks": self.file_loader.codebooks
         })
         return config
 
     def get_output_signature(self):
         return tf.TensorSpec(shape=(
-            (75 if self.file_loader.model_name == 'encodec_24khz' else 150) * self.window,
-            128 if self.file_loader.decode else self.file_loader.expected_codebooks,
+            self.file_loader.frame_rate * self.window,
+            128 if self.file_loader.decode else self.file_loader.codebooks,
         ), dtype=tf.float32)
 
     def get_model_builder(self):

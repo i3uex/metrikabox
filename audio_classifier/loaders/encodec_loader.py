@@ -19,11 +19,21 @@ class EncodecLoader(BaseLoader):
         super().__init__(**kwargs)
         self.model_name = model
         self.bandwidth = bandwidth
-        model = MODELS[model]
-        self.expected_codebooks = model.quantizer.get_num_quantizers_for_bandwidth(model.frame_rate, bandwidth)
-        self.window_frames = self.window * model.frame_rate
-        self.step_frames = self.step * model.frame_rate
+        self.window_frames = self.window * self.frame_rate
+        self.step_frames = self.step * self.frame_rate
         self.decode = decode
+
+    @property
+    def model(self):
+        return MODELS[self.model_name]
+
+    @property
+    def codebooks(self):
+        return self.model.quantizer.get_num_quantizers_for_bandwidth(self.model.frame_rate, self.bandwidth)
+
+    @property
+    def frame_rate(self):
+        return self.model.frame_rate
 
     def decompress_from_file(self, fo: tp.IO[bytes], device='cpu') -> tp.Tuple[torch.Tensor, int, int]:
         """Decompress from a file-object.
@@ -43,11 +53,11 @@ class EncodecLoader(BaseLoader):
             raise ValueError(f"Model mismatch: {model_name} != {self.model_name}")
         assert isinstance(audio_length, int)
         assert isinstance(num_codebooks, int)
-        if not self.decode and num_codebooks != self.expected_codebooks:
-            raise ValueError(f"Expected {self.expected_codebooks} codebooks, got {num_codebooks} with decoding disabled")
+        if not self.decode and num_codebooks != self.codebooks:
+            raise ValueError(f"Expected {self.codebooks} codebooks, got {num_codebooks} with decoding disabled")
         if model_name not in MODELS:
             raise ValueError(f"The audio was compressed with an unsupported model {model_name}.")
-        model = MODELS[model_name]
+        model = self.model
         if use_lm:
             lm = model.get_lm_model()
 
