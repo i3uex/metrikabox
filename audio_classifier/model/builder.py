@@ -158,9 +158,15 @@ class EncodecModelBuilder(ModelBuilder):
 
     def __init__(
             self,
+            model: str = 'encodec_24khz',
+            decode: bool = True,
+            expected_codebooks: int = 8,
             **kwargs
     ):
         super().__init__(**kwargs)
+        self.model = model
+        self.decode = decode
+        self.expected_codebooks = expected_codebooks
 
     def get_preprocessing_layer(
             self,
@@ -168,6 +174,9 @@ class EncodecModelBuilder(ModelBuilder):
             spectrum_augmentations: List[SpectrogramAugmentationLayer] = ()
         ):
         model = super().get_preprocessing_layer(audio_augmentations, spectrum_augmentations)
+        # Scale up to 32 if not decoding (will scale up to 128) and codebooks are less than 32
+        if not self.decode and self.expected_codebooks < 32:
+            model.add(keras.layers.Conv1D(32, 1, padding='same'))
         model.add(keras.layers.Lambda(lambda x: tf.keras.backend.expand_dims(x, -1)))
         model.add(keras.layers.Conv2D(3, 1, padding='same'))
         return model

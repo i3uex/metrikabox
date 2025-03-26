@@ -220,8 +220,7 @@ def main():
                     encodec_decode = gr.Checkbox(
                         label="Decode",
                         info="Whether if the audio should be decoded. Increases latent space",
-                        value=True,
-                        visible=False
+                        value=True
                     )
                     bandwidth = gr.Dropdown(
                         label="Bandwidth",
