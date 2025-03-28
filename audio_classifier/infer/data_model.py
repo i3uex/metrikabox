@@ -33,6 +33,7 @@ class DataModel(metaclass=Singleton):
         else:
             custom_objects = AVAILABLE_AUDIO_AUGMENTATIONS.copy()
             custom_objects["NormLayer"] = NormLayer
+            custom_objects["expand_dims"] = keras.ops.expand_dims
             self.model = keras.models.load_model(model, compile=False, custom_objects=custom_objects)
         if type(model_config) is dict:
             self.model_config = model_config

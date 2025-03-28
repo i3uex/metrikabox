@@ -7,7 +7,7 @@ class DataLoader(ABC):
     """
     Base class to load audio files
     """
-    def __init__(self, window: float = constants.DEFAULT_WINDOW, step: float = constants.DEFAULT_STEP):
+    def __init__(self, window: float = constants.DEFAULT_WINDOW, step: float = constants.DEFAULT_STEP, **kwargs):
         self.window = window
         self.step = step
 

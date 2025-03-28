@@ -49,8 +49,6 @@ class ModelBuilder(ABC):
         self.window = window
         self.step = step
 
-
-    @abstractmethod
     def get_preprocessing_layer(
             self,
             audio_augmentations: List[AudioAugmentationLayer] = (),
@@ -81,6 +79,10 @@ class ModelBuilder(ABC):
             )
         )
         return model
+
+    @abstractmethod
+    def get_output_signature(self):
+        pass
 
 
 class AudioModelBuilder(ModelBuilder):
@@ -150,6 +152,9 @@ class AudioModelBuilder(ModelBuilder):
         model.add(keras.layers.Conv2D(3, 1, padding='same'))
         return model
 
+    def get_output_signature(self):
+        return tf.TensorSpec(shape=(int(self.sample_rate * self.window),), dtype=tf.int16)
+
 
 class EncodecModelBuilder(ModelBuilder):
     """
@@ -161,12 +166,14 @@ class EncodecModelBuilder(ModelBuilder):
             model: str = 'encodec_24khz',
             decode: bool = True,
             expected_codebooks: int = 8,
+            frame_rate: int = 75,
             **kwargs
     ):
         super().__init__(**kwargs)
         self.model = model
         self.decode = decode
         self.expected_codebooks = expected_codebooks
+        self.frame_rate = frame_rate
 
     def get_preprocessing_layer(
             self,
@@ -177,9 +184,15 @@ class EncodecModelBuilder(ModelBuilder):
         # Scale up to 32 if not decoding (will scale up to 128) and codebooks are less than 32
         if not self.decode and self.expected_codebooks < 32:
             model.add(keras.layers.Conv1D(32, 1, padding='same'))
-        model.add(keras.layers.Lambda(lambda x: tf.keras.backend.expand_dims(x, -1)))
+        model.add(keras.layers.Lambda(keras.ops.expand_dims, arguments={"axis": -1}))
         model.add(keras.layers.Conv2D(3, 1, padding='same'))
         return model
+
+    def get_output_signature(self):
+        return tf.TensorSpec(shape=(
+            self.frame_rate * self.window,
+            128 if self.decode else self.expected_codebooks,
+        ), dtype=tf.float32)
 
 
 if __name__ == '__main__':

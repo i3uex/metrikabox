@@ -1,13 +1,10 @@
-from abc import abstractmethod
 from collections import Counter
-from typing import Collection, Type
-import tensorflow as tf
+from typing import Collection
 from audio_classifier import constants
 from audio_classifier.loaders import FolderLoader
 from audio_classifier.loaders.class_loaders import ClassLoaderFromFolderName
 from audio_classifier.loaders.data_loaders import EncodecLoader, AudioLoader
-from audio_classifier.model import AudioModelBuilder
-from audio_classifier.model.builder import EncodecModelBuilder, ModelBuilder
+from audio_classifier.model import AudioModelBuilder, EncodecModelBuilder
 from audio_classifier.utils import LOGGER
 
 
@@ -58,10 +55,6 @@ class Dataset:
         LOGGER.info(f"Number of items per class: {Counter(y)}")
         return x, y
 
-    @abstractmethod
-    def get_output_signature(self):
-        pass
-
     def get_model_builder(self, model_config):
         if self.model_builder is None:
             raise NotImplementedError("Model builder not implemented")
@@ -106,9 +99,6 @@ class AudioDataset(Dataset):
         })
         return config
 
-    def get_output_signature(self):
-        return tf.TensorSpec(shape=(int(self.sample_rate * self.window),), dtype=tf.int16)
-
 
 class EncodecDataset(Dataset):
     def __init__(
@@ -132,14 +122,11 @@ class EncodecDataset(Dataset):
         config.update({
             "model": self.file_loader.model_name,
             "decode": self.file_loader.decode,
+            "bandwidth": self.file_loader.bandwidth,
+            "frame_rate": self.file_loader.frame_rate,
             "expected_codebooks": self.file_loader.codebooks
         })
         return config
 
-    def get_output_signature(self):
-        return tf.TensorSpec(shape=(
-            self.file_loader.frame_rate * self.window,
-            128 if self.file_loader.decode else self.file_loader.codebooks,
-        ), dtype=tf.float32)
 
 

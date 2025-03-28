@@ -81,7 +81,8 @@ class Trainer:
         model_config = dataset.get_config()
         model_config["classes"] = encoder.classes_.tolist()
         model_config_path = _dump_model_config(model_id, model_config)
-        model = dataset.get_model_builder(model_config).get_model(
+        model_builder = dataset.get_model_builder(model_config)
+        model = model_builder.get_model(
             num_classes,
             audio_augmentations=self.audio_augmentations,
             spectrum_augmentations=self.spectrogram_augmentations,
@@ -105,7 +106,7 @@ class Trainer:
 
         # Prepare model output signature
         output_signature = (
-            dataset.get_output_signature(),
+            model_builder.get_output_signature(),
             tf.TensorSpec(shape=(num_classes if num_classes > 2 else 1), dtype=tf.int64),
             tf.TensorSpec(shape=(), dtype=tf.float64)
         )
