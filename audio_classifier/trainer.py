@@ -7,7 +7,6 @@ from sklearn.preprocessing import LabelBinarizer
 from audio_classifier import Dataset
 from audio_classifier import constants
 from audio_classifier.utils import LOGGER
-from audio_classifier.model.builder import ModelBuilder
 
 
 def _generate(x: Collection, y: Collection, class_weight='balanced') -> callable:
@@ -57,15 +56,6 @@ class Trainer:
             for spectrogram_augmentation in spectrogram_augmentations
         ]
 
-    def _get_model(self, model_config: dict, model_type: ModelBuilder):
-        num_classes = len(model_config.pop('classes'))
-        return model_type(**model_config).get_model(
-            num_classes,
-            audio_augmentations=self.audio_augmentations,
-            spectrum_augmentations=self.spectrogram_augmentations,
-            predefined_model=self.predefined_model,
-        )
-
     def train(
             self,
             dataset: Dataset,
@@ -91,7 +81,12 @@ class Trainer:
         model_config = dataset.get_config()
         model_config["classes"] = encoder.classes_.tolist()
         model_config_path = _dump_model_config(model_id, model_config)
-        model = self._get_model(model_config, dataset.get_model_builder())
+        model = dataset.get_model_builder(model_config).get_model(
+            num_classes,
+            audio_augmentations=self.audio_augmentations,
+            spectrum_augmentations=self.spectrogram_augmentations,
+            predefined_model=self.predefined_model,
+        )
 
         # Prepare model optimizer
         if optimizer:

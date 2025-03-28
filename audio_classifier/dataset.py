@@ -34,6 +34,7 @@ class Dataset:
         else:
             self.class_loader = ClassLoaderFromFolderName()
         self.data_loader = None
+        self.model_builder = None
 
     def get_config(self):
         return {
@@ -61,9 +62,11 @@ class Dataset:
     def get_output_signature(self):
         pass
 
-    @abstractmethod
-    def get_model_builder(self):
-        pass
+    def get_model_builder(self, model_config):
+        if self.model_builder is None:
+            raise NotImplementedError("Model builder not implemented")
+        else:
+            return self.model_builder(**model_config)
 
 
 class AudioDataset(Dataset):
@@ -106,9 +109,6 @@ class AudioDataset(Dataset):
     def get_output_signature(self):
         return tf.TensorSpec(shape=(int(self.sample_rate * self.window),), dtype=tf.int16)
 
-    def get_model_builder(self):
-        return AudioModelBuilder
-
 
 class EncodecDataset(Dataset):
     def __init__(
@@ -142,6 +142,4 @@ class EncodecDataset(Dataset):
             128 if self.file_loader.decode else self.file_loader.codebooks,
         ), dtype=tf.float32)
 
-    def get_model_builder(self):
-        return EncodecModelBuilder
 
