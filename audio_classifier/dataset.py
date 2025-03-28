@@ -1,12 +1,13 @@
 from abc import abstractmethod
 from collections import Counter
-from typing import Collection
+from typing import Collection, Type
 import tensorflow as tf
 from audio_classifier import constants
-from audio_classifier.loaders import ClassLoaderFromFolderName, FolderLoader, FileLoader
-from audio_classifier.loaders.encodec_loader import EncodecLoader
+from audio_classifier.loaders import FolderLoader
+from audio_classifier.loaders.class_loaders import ClassLoaderFromFolderName
+from audio_classifier.loaders.data_loaders import EncodecLoader, AudioLoader
 from audio_classifier.model import AudioModelBuilder
-from audio_classifier.model.builder import EncodecModelBuilder
+from audio_classifier.model.builder import EncodecModelBuilder, ModelBuilder
 from audio_classifier.utils import LOGGER
 
 
@@ -40,7 +41,8 @@ class Dataset:
             "window": self.window,
             "step": self.step,
             "classes2avoid": self.classes2avoid,
-            "class_loader": type(self.class_loader).__name__
+            "class_loader": type(self.class_loader).__name__,
+            "file_loader": type(self.data_loader.file_loader).__name__
         }
 
     def load(self):
@@ -49,8 +51,7 @@ class Dataset:
         :return: loaded data in a tuple (x, y, num_classes)
         """
         if not self.data_loader:
-            print("Error: No data loader provided. Exiting")
-            return ()
+            raise NotImplementedError("Data loader not implemented")
         x, y = self.data_loader.load(self.folder, classes2avoid=self.classes2avoid)
         assert len(y) == len(x)
         LOGGER.info(f"Number of items per class: {Counter(y)}")
@@ -83,11 +84,12 @@ class AudioDataset(Dataset):
         self.stft_hop = stft_hop
         self.stft_nmels = stft_nmels
         self.mel_f_min = mel_f_min
-        self.file_loader = FileLoader(sample_rate=sample_rate, window=self.window, step=self.step)
+        self.file_loader = AudioLoader(sample_rate=sample_rate, window=self.window, step=self.step)
         self.data_loader = FolderLoader(
             self.file_loader,
             class_loader=self.class_loader
         )
+        self.model_builder = AudioModelBuilder
 
     def get_config(self):
         config = super().get_config()
@@ -123,6 +125,7 @@ class EncodecDataset(Dataset):
             class_loader=self.class_loader,
             audio_formats=['.ecdc']
         )
+        self.model_builder = EncodecModelBuilder
 
     def get_config(self):
         config = super().get_config()

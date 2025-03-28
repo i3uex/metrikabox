@@ -1,8 +1,8 @@
 import numpy as np
-from audio_classifier.predictor.audio_model import AudioModel
+from audio_classifier.infer import DataModel
 
 
-class AudioClassifier(AudioModel):
+class DataClassifier(DataModel):
     """
     Class to predict audio classes
     """
@@ -21,4 +21,4 @@ class AudioClassifier(AudioModel):
 
 if __name__ == '__main__':
     import sys
-    print(AudioClassifier(sys.argv[2]).predict(sys.argv[1]))
+    print(DataClassifier(sys.argv[2]).predict(sys.argv[1]))

@@ -11,7 +11,7 @@ TYPE2DATASET = {
     "Audio": AudioDataset,
     "Encodec": EncodecDataset
 }
-
+DATASET_TYPES = sorted(TYPE2DATASET.keys())
 
 def train(
         folder,
@@ -135,8 +135,8 @@ def main():
                 dataset_type = gr.Dropdown(
                     label="Dataset format",
                     info="Format of files in the dataset",
-                    choices=["Audio", "Encodec"],
-                    value="Audio"
+                    choices=DATASET_TYPES,
+                    value=DATASET_TYPES[0]
                 )
                 inp.append(gr.Dropdown(
                     label="Model to train",

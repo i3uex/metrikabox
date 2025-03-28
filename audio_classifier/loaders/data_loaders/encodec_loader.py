@@ -5,7 +5,7 @@ import typing as tp
 from encodec import binary
 from encodec.quantization.ac import ArithmeticDecoder, build_stable_quantized_cdf
 from encodec.model import EncodecModel
-from audio_classifier.loaders import BaseLoader
+from audio_classifier.loaders.data_loaders import DataLoader
 
 MODELS = {
     'encodec_24khz': EncodecModel.encodec_model_24khz(),
@@ -13,7 +13,7 @@ MODELS = {
 }
 
 
-class EncodecLoader(BaseLoader):
+class EncodecLoader(DataLoader):
 
     def __init__(self, model: str=list(MODELS.keys())[0], decode=False, bandwidth=None, **kwargs):
         super().__init__(**kwargs)

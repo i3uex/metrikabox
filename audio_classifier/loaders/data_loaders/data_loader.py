@@ -1,9 +1,9 @@
 from abc import abstractmethod, ABC
 import numpy as np
-from .. import constants
+from audio_classifier import constants
 
 
-class BaseLoader(ABC):
+class DataLoader(ABC):
     """
     Base class to load audio files
     """

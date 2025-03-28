@@ -3,10 +3,10 @@ import soxr
 import numpy as np
 from pydub import AudioSegment
 from audio_classifier import constants
-from audio_classifier.loaders import BaseLoader
+from audio_classifier.loaders.data_loaders import DataLoader
 
 
-class FileLoader(BaseLoader):
+class AudioLoader(DataLoader):
     """
     Class to load audio files
     """

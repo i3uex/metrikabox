@@ -1,5 +1,4 @@
-from .base_loader import BaseLoader
-from .file_loader import FileLoader
+from .data_loaders import DataLoader, AudioLoader, EncodecLoader
+from .class_loaders import ClassLoaderFromDict, ClassLoaderFromFolderName, ClassLoaderFromSameFileName
 from .folder_loader import FolderLoader
-from .class_loader import ClassLoaderFromDict, ClassLoaderFromFolderName, ClassLoaderFromSameFileName
 

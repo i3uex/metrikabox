@@ -8,8 +8,8 @@ import numpy as np
 from tqdm import tqdm
 from audio_classifier import constants
 from audio_classifier.utils import LOGGER
-from audio_classifier.loaders import BaseLoader, FileLoader
-from audio_classifier.loaders.class_loader import ClassLoader
+from audio_classifier.loaders.data_loaders import DataLoader, AudioLoader
+from audio_classifier.loaders.class_loaders import ClassLoader
 
 BASE_PATH = ''
 
@@ -17,7 +17,7 @@ BASE_PATH = ''
 class FolderLoader:
     def __init__(
             self,
-            file_loader: BaseLoader = None,
+            file_loader: DataLoader = None,
             class_loader: ClassLoader = ClassLoader(),
             audio_formats: Collection[str] = (".wav", ".mp3")
     ):
@@ -32,7 +32,7 @@ class FolderLoader:
         self.X = []
         self.class_loader = class_loader
         if not file_loader:
-            file_loader = FileLoader(
+            file_loader = AudioLoader(
                 sample_rate=constants.DEFAULT_SAMPLE_RATE,
                 window=constants.DEFAULT_WINDOW,
                 step=constants.DEFAULT_STEP

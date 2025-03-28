@@ -1,8 +1,8 @@
 import numpy as np
-from audio_classifier.predictor.audio_model import AudioModel
+from audio_classifier.infer import DataModel
 
 
-class AudioSegmenter(AudioModel):
+class DataSegmenter(DataModel):
     """
     Class to segment audio classes
     """
@@ -28,4 +28,4 @@ class AudioSegmenter(AudioModel):
 
 if __name__ == '__main__':
     import sys
-    print(AudioSegmenter(sys.argv[2]).predict(sys.argv[1]))
+    print(DataSegmenter(sys.argv[2]).predict(sys.argv[1]))

@@ -2,12 +2,12 @@ import os
 import json
 import numpy as np
 from multiprocessing import Lock
-from typing import Union
+from typing import Union, Type
 import keras
 from pydub import AudioSegment
 from sklearn.preprocessing import LabelBinarizer
 from audio_classifier.constants import AVAILABLE_AUDIO_AUGMENTATIONS
-from audio_classifier.loaders import FileLoader
+from audio_classifier.loaders.data_loaders import DataLoader
 from audio_classifier.model.builder import NormLayer
 from audio_classifier.utils import Singleton
 
@@ -18,11 +18,11 @@ except ValueError:
     BATCH_SIZE = 128
 
 
-class AudioModel(metaclass=Singleton):
+class DataModel(metaclass=Singleton):
     """
     Class to load a model and predict audio
     """
-    def __init__(self, model: Union[keras.Model, str], model_config: Union[dict, str] = ""):
+    def __init__(self, model: Union[keras.Model, str], model_config: Union[dict, str] = "", data_loader: Type[DataLoader] = None):
         """
         Class to load a model and predict audio
         :param model_id: ID of the model to load
@@ -39,6 +39,7 @@ class AudioModel(metaclass=Singleton):
         else:
             with open(model_config) as f:
                 self.model_config = json.load(f)
+        self.data_loader = data_loader(**self.model_config) if data_loader else DataLoader(**self.model_config)
         self.encoder = LabelBinarizer().fit(self.model_config['classes'])
 
     def predict_without_format(self, audio: Union[str, np.ndarray, AudioSegment]) -> np.ndarray:
@@ -47,7 +48,7 @@ class AudioModel(metaclass=Singleton):
         :param audio: Audio to predict
         :return: Prediction
         """
-        return self.model.predict(FileLoader(self.model_config['sample_rate'], self.model_config['window'], self.model_config['step']).load(audio), batch_size=BATCH_SIZE)
+        return self.model.predict(self.data_loader.load(audio), batch_size=BATCH_SIZE)
 
     def predict(self, audio: Union[str, np.ndarray, AudioSegment]):
         """
@@ -68,4 +69,4 @@ class AudioModel(metaclass=Singleton):
 
 if __name__ == '__main__':
     import sys
-    print(AudioModel(sys.argv[2]).predict(sys.argv[1]))
+    print(DataModel(sys.argv[2]).predict(sys.argv[1]))

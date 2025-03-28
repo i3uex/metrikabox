@@ -3,7 +3,7 @@ from typing import List
 import keras
 import tensorflow as tf
 from audio_classifier import constants
-from audio_classifier.loaders import FileLoader
+from audio_classifier.loaders import AudioLoader
 from audio_classifier.model.classification import MNIST_convnet
 from audio_classifier.augmentations import AudioAugmentationLayer, SpectrogramAugmentationLayer
 
@@ -188,7 +188,7 @@ if __name__ == '__main__':
     step = 2.5
     window = 5
     sample_rate = 16000
-    fl = FileLoader(sample_rate=sample_rate, window=window, step=step)
+    fl = AudioLoader(sample_rate=sample_rate, window=window, step=step)
     windowed_audio = fl.load("../example.ogg", max_duration=10)
     # Create model builder
     builder = AudioModelBuilder(sample_rate=sample_rate, window=window, step=step)
