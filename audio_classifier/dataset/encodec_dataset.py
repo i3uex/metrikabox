@@ -1,4 +1,4 @@
-from audio_classifier import Dataset
+from audio_classifier.dataset import Dataset
 from audio_classifier.loaders import FolderLoader
 from audio_classifier.loaders.data_loaders import EncodecLoader
 from audio_classifier.model import EncodecModelBuilder

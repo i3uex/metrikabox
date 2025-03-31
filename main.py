@@ -1,43 +1,15 @@
 import datetime
 import json
 import os
-from typing import List
+from typing import List, Union
 import fire
 from matplotlib import pyplot as plt
 from audio_classifier import Trainer
 from audio_classifier.dataset import TYPE2DATASET
-from audio_classifier.infer import DataClassifier, DataSegmenter
+from audio_classifier.infer import TASK2MODEL
 from audio_classifier import constants
+from audio_classifier.loaders.data_loaders import TYPE2LOADER
 from audio_classifier.utils import LOGGER
-from demo_infer import TYPE2LOADER
-
-TASK2MODEL = {
-    'classify': DataClassifier,
-    'segment': DataSegmenter,
-}
-
-
-def plot_history(history, model_id):
-    """
-    Plots the history of the model training
-    :param history: History object from keras
-    :return:
-    """
-    fig, (ax, bx) = plt.subplots(2, 1)
-    ax.plot(history.history['binary_accuracy'] if 'binary_accuracy' in history.history else history.history['categorical_accuracy'])
-    ax.plot(history.history['val_binary_accuracy'] if 'val_binary_accuracy' in history.history else history.history['val_categorical_accuracy'])
-    ax.set_title('model accuracy')
-    ax.set_ylabel('accuracy')
-    ax.set_xlabel('epoch')
-    ax.legend(['train', 'val'], loc='upper left')
-    bx.plot(history.history['loss'])
-    bx.plot(history.history['val_loss'])
-    bx.set_title('model loss')
-    bx.set_ylabel('loss')
-    bx.set_xlabel('epoch')
-    bx.legend(['train', 'val'], loc='upper left')
-    plt.savefig(model_id + '.png')
-    plt.show()
 
 
 class Main:
@@ -73,7 +45,7 @@ class Main:
             sample_rate: int = constants.DEFAULT_SAMPLE_RATE,
             window: float = constants.DEFAULT_WINDOW,
             step: float = constants.DEFAULT_STEP,
-            classes2avoid: List[str] = (),
+            classes2avoid: Union[List[str], str] = (),
             checkpoints_folder: str = constants.CHECKPOINTS_FOLDER,
             optimizer: str = constants.DEFAULT_OPTIMIZER,
             class_loader: str = constants.DEFAULT_CLASS_LOADER,
@@ -130,6 +102,8 @@ class Main:
         :param epochs: Number of epochs to train
         :return:
         """
+        if type(classes2avoid) is str:
+            classes2avoid = classes2avoid.split(",")
         trainer = Trainer(
             predefined_model=model,
             audio_augmentations=audio_augmentations,
@@ -145,7 +119,7 @@ class Main:
             stft_hop=stft_hop,
             stft_nmels=stft_nmels,
             mel_f_min=mel_f_min,
-            classes2avoid=classes2avoid.split(",") if classes2avoid else [],
+            classes2avoid=classes2avoid,
             class_loader=class_loader,
             model=encodec_model,
             decode=encodec_decode,
@@ -171,7 +145,6 @@ class Main:
         os.makedirs('histories', exist_ok=True)
         with open(f'histories/{model_id}.json', "w") as f:
             json.dump(history.history, f, default=str)
-        plot_history(history, model_id)
         return checkpoint_filepath, model_config_path, history
 
 

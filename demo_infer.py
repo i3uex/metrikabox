@@ -4,12 +4,8 @@ import soxr
 from audio_classifier.utils import LOGGER
 from audio_classifier import constants
 from audio_classifier.infer import TASK2MODEL
-from audio_classifier.loaders.data_loaders import AudioLoader, EncodecLoader
+from audio_classifier.loaders.data_loaders import TYPE2LOADER
 
-TYPE2LOADER = {
-    "Audio": AudioLoader,
-    "Encodec": EncodecLoader
-}
 
 LOADER_TYPES = sorted(TYPE2LOADER.keys())
 
