@@ -1,17 +1,12 @@
-import datetime
 import gradio as gr
 import numpy as np
 from audio_classifier import constants
-from audio_classifier import Trainer
-from audio_classifier.dataset import AudioDataset, EncodecDataset
+from audio_classifier.dataset import TYPE2DATASET
 from demo_utils import get_image_from_history
+from main import Main
 
-
-TYPE2DATASET = {
-    "Audio": AudioDataset,
-    "Encodec": EncodecDataset
-}
 DATASET_TYPES = sorted(TYPE2DATASET.keys())
+
 
 def train(
         folder,
@@ -45,6 +40,10 @@ def train(
 ):
     """
     Trains the model
+    :param bandwidth: Bandwidth the audio was encoded to (Only use with 'EnCodec' dataset type)
+    :param encodec_decode: Whether if the audio should be decoded. Increases latent space (Only use with 'EnCodec' dataset type)
+    :param encodec_model: EnCodec Model the audios where encoded with (Only use with 'EnCodec' dataset type)
+    :param dataset_type: Format of files in the dataset
     :param folder: Path to the older containing the audio files
     :param sample_rate: Sample rate the audios will be resampled to
     :param window: Seconds of audio to use
@@ -71,43 +70,35 @@ def train(
     :param checkpoint_metric: Metric used to obtain the best checkpoint of the model
     :return:
     """
-    trainer = Trainer(
-        predefined_model=model,
-        audio_augmentations=audio_augmentations,
-        spectrogram_augmentations=spectrogram_augmentations
-    )
-    dataset = TYPE2DATASET[dataset_type](
+    model_checkpoints, model_config_path, history = Main().train(
         folder=folder,
+        model=model,
         sample_rate=sample_rate,
         window=window,
         step=step,
+        classes2avoid=classes2avoid,
+        checkpoints_folder=checkpoints_folder,
+        optimizer=optimizer,
+        batch_size=batch_size,
+        epochs=epochs,
+        class_loader=class_loader,
+        learning_rate=learning_rate,
+        model_id=model_id,
         stft_nfft=stft_nfft,
         stft_win=stft_win,
         stft_hop=stft_hop,
         stft_nmels=stft_n_mels,
         mel_f_min=mel_f_min,
-        classes2avoid=classes2avoid.split(",") if classes2avoid else [],
-        class_loader=class_loader,
-        model=encodec_model,
-        decode=encodec_decode,
-        bandwidth=bandwidth
-    )
-    if not model_id:
-        folder_name = folder.rsplit("/")[-1] if folder[-1] != "/" else folder.rsplit("/")[-2]
-        model_id = f"{folder_name}_{str(datetime.datetime.now())}_{sample_rate}Hz_{window}w_{step}s"
-    model_checkpoints, model_config_path, history = trainer.train(
-        dataset,
-        val_size=0.2,
-        optimizer=optimizer,
-        learning_rate=learning_rate,
-        checkpoints_folder=checkpoints_folder,
-        batch_size=batch_size,
-        epochs=epochs,
-        model_id=model_id,
-        early_stopping_patience=early_stopping_patience,
+        audio_augmentations=audio_augmentations,
+        spectrogram_augmentations=spectrogram_augmentations,
         reduce_lr_on_plateau_patience=reduce_lr_on_plateau_patience,
-        checkpoint_metric=checkpoint_metric,
+        early_stopping_patience=early_stopping_patience,
         early_stopping_metric=early_stopping_metric,
+        checkpoint_metric=checkpoint_metric,
+        encodec_model=encodec_model,
+        encodec_decode=encodec_decode,
+        bandwidth=bandwidth,
+        dataset_type=dataset_type
     )
     return [model_checkpoints, model_config_path], [
         (get_image_from_history(history.history, 'accuracy'), "Model Accuracy"),
@@ -142,7 +133,7 @@ def main():
                     label="Model to train",
                     info="Predefined model to train with the selected dataset",
                     choices=sorted(constants.AVAILABLE_MODELS.keys()),
-                    value="custom.MNIST_convnet",
+                    value=constants.DEFAULT_MODEL,
                 ))  # model
             with gr.Column():
                 out = [
@@ -241,7 +232,7 @@ def main():
                         label="Class loader",
                         info="Class loader to use for the dataset",
                         choices=sorted(constants.AVAILABLE_CLASS_LOADERS.keys()),
-                        value="ClassLoaderFromFolderName"
+                        value=constants.DEFAULT_CLASS_LOADER
                     )
                     classes2avoid = gr.Text(
                         label="Classes to avoid",
@@ -251,14 +242,15 @@ def main():
                 model_id = gr.Text(
                     label="Model ID",
                     info="ID to use for the model",
-                    value=None
+                    value=None,
+                    placeholder=constants.DEFAULT_MODEL_ID
                 )
                 with gr.Row():
                     optimizer = gr.Dropdown(
                         label="Optimizer",
                         info="Optimizer to be used in training",
                         choices=sorted(constants.AVAILABLE_KERAS_OPTIMIZERS.keys()),
-                        value="Adam"
+                        value=constants.DEFAULT_OPTIMIZER
                     )
                     batch_size = gr.Number(
                         label="Batch Size",
