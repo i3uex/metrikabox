@@ -9,7 +9,6 @@ from sklearn.preprocessing import LabelBinarizer
 from audio_classifier.constants import AVAILABLE_AUDIO_AUGMENTATIONS
 from audio_classifier.loaders.data_loaders import DataLoader
 from audio_classifier.model.builder import NormLayer
-from audio_classifier.utils import Singleton
 
 BATCH_SIZE = os.environ.get('CLASSIFIER_BATCH_SIZE', '128')
 try:
@@ -18,7 +17,7 @@ except ValueError:
     BATCH_SIZE = 128
 
 
-class DataModel(metaclass=Singleton):
+class DataModel:
     """
     Class to load a model and predict audio
     """
