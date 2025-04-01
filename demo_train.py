@@ -3,7 +3,7 @@ import numpy as np
 from audio_classifier import constants
 from audio_classifier.dataset import TYPE2DATASET
 from demo_utils import get_image_from_history
-from main import Main
+from main import train as _train
 
 DATASET_TYPES = sorted(TYPE2DATASET.keys())
 
@@ -70,7 +70,7 @@ def train(
     :param checkpoint_metric: Metric used to obtain the best checkpoint of the model
     :return:
     """
-    model_checkpoints, model_config_path, history = Main().train(
+    model_checkpoints, model_config_path, history = _train(
         folder=folder,
         model=model,
         sample_rate=sample_rate,
@@ -217,7 +217,7 @@ def main():
                         label="Bandwidth",
                         info="Bandwidth the audio was encoded to",
                         choices=[1.5, 3.0, 6.0, 12.0, 24.0],
-                        value=6.
+                        value=6.0
                     )
                 def update_encodec_params_visibility(type):  # Accept the event argument, even if not used
                     if type == 'Encodec':
