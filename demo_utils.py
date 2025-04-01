@@ -93,7 +93,7 @@ def draw_history(history, metric, best_metric_fn, percentage, smooth=.8, alpha=0
     ax.annotate(f'{round(best_val_metric * (100 if percentage else 1), 2)}{"%" if percentage else ""} at epoch {best_val_metric_epoch}',
                 xy=(best_val_metric_epoch, best_val_metric),
                 xycoords='data',
-                xytext=(0.5, 0.5),
+                xytext=(0.25, 0.25),
                 textcoords='figure fraction',
                 horizontalalignment='left',
                 verticalalignment='bottom',

@@ -1,154 +1,148 @@
 import datetime
 import json
 import os
-from typing import List
+from typing import List, Union
 import fire
-from matplotlib import pyplot as plt
-from audio_classifier import Dataset
-from audio_classifier import AudioClassifier, AudioSegmenter, Trainer
-from audio_classifier.config import DEFAULT_SAMPLE_RATE, DEFAULT_STEP, DEFAULT_WINDOW, CHECKPOINTS_FOLDER, \
-    MODEL_CONFIG_FOLDER, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS
-from audio_classifier.model.builder import DEFAULT_STFT_N_FFT, DEFAULT_STFT_WIN, DEFAULT_STFT_HOP, DEFAULT_N_MELS, DEFAULT_MEL_F_MIN
+from audio_classifier import Trainer
+from audio_classifier.dataset import TYPE2DATASET
+from audio_classifier.infer import TASK2MODEL
+from audio_classifier import constants
+from audio_classifier.loaders.data_loaders import TYPE2LOADER
 from audio_classifier.utils import LOGGER
 
-TASK2MODEL = {
-    'classify': AudioClassifier,
-    'segment': AudioSegmenter,
-}
+
+def infer(
+        filename,
+        model_path,
+        model_config_path=None,
+        loader_type='Audio',
+        task='segment'
+):
+    if __name__ == '__main__':
+        if task not in TASK2MODEL:
+            LOGGER.error(f"Task {task} is not supported. Supported tasks are {TASK2MODEL.keys()}")
+            exit()
+        if not model_config_path:
+            base_path, model_name = model_path.rsplit('.', 1)[0].rsplit('/', 1)
+            model_config_path = f"{base_path}/{constants.MODEL_CONFIG_FOLDER}/{model_name}/model-config.json"
+        model = TASK2MODEL[task](model_path, model_config_path, TYPE2LOADER[loader_type])
+        base_file_name = filename.split(".", 1)[0]
+        probabilities = model.predict_without_format(filename)
+        with open(f"{base_file_name}_probas.json", 'w') as f:
+            json.dump(probabilities.tolist(), f)
+        predictions = model.format_output(probabilities)
+        with open(f"{base_file_name}_{task}.json", 'w') as f:
+            json.dump(predictions, f, default=str)
+        return predictions
 
 
-def plot_history(history, model_id):
+def train(
+        folder,
+        sample_rate: int = constants.DEFAULT_SAMPLE_RATE,
+        window: float = constants.DEFAULT_WINDOW,
+        step: float = constants.DEFAULT_STEP,
+        classes2avoid: Union[List[str], str] = (),
+        checkpoints_folder: str = constants.CHECKPOINTS_FOLDER,
+        optimizer: str = constants.DEFAULT_OPTIMIZER,
+        class_loader: str = constants.DEFAULT_CLASS_LOADER,
+        learning_rate: float = constants.DEFAULT_LR,
+        model_id: str = constants.DEFAULT_MODEL_ID,
+        stft_nfft: int = constants.DEFAULT_STFT_N_FFT,
+        stft_win: int = constants.DEFAULT_STFT_WIN,
+        stft_hop: int = constants.DEFAULT_STFT_HOP,
+        stft_nmels: int = constants.DEFAULT_N_MELS,
+        mel_f_min: int = constants.DEFAULT_MEL_F_MIN,
+        model: str = constants.DEFAULT_MODEL,
+        audio_augmentations: List[str] = (),
+        spectrogram_augmentations: List[str] = (),
+        epochs=constants.DEFAULT_EPOCHS,
+        batch_size=constants.DEFAULT_BATCH_SIZE,
+        dataset_type=constants.DEFAULT_DATASET_TYPE,
+        encodec_model=constants.DEFAULT_ENCODEC_MODEL,
+        encodec_decode=constants.DEFAULT_ENCODEC_DECODE,
+        bandwidth=constants.DEFAULT_ENCODEC_BANDWIDTH,
+        early_stopping_patience=constants.DEFAULT_EARLY_STOPPING_PATIENCE,
+        early_stopping_metric=constants.DEFAULT_EARLY_STOPPING_METRIC,
+        reduce_lr_on_plateau_patience=constants.DEFAULT_REDUCE_LR_ON_PLATEAU_PATIENCE,
+        checkpoint_metric=constants.DEFAULT_CHECKPOINT_METRIC
+):
     """
-    Plots the history of the model training
-    :param history: History object from keras
+    Trains the model
+    :param checkpoint_metric: Metric used to obtain the best checkpoint of the model
+    :param reduce_lr_on_plateau_patience: Patience for reducing the learning rate on plateau (0 for no reducing)
+    :param early_stopping_metric: Metric used to monitor the early stopping
+    :param early_stopping_patience: Patience for early stopping (0 for no early stopping)
+    :param bandwidth: Bandwidth the audio was encoded to (Only use with 'EnCodec' dataset type)
+    :param encodec_decode: Whether if the audio should be decoded. Increases latent space (Only use with 'EnCodec' dataset type)
+    :param encodec_model: EnCodec Model the audios where encoded with (Only use with 'EnCodec' dataset type)
+    :param dataset_type: Format of files in the dataset
+    :param folder: Path to the older containing the audio files
+    :param sample_rate: Sample rate the audios will be resampled to
+    :param window: Seconds of audio to use
+    :param step: Seconds to move the window
+    :param classes2avoid: Classes to avoid from training model
+    :param checkpoints_folder: Path to save the model checkpoints
+    :param optimizer: String with the optimizer to use
+    :param class_loader: String with the class loader to use
+    :param learning_rate: Learning rate for the optimizer
+    :param model_id: String with the model id
+    :param stft_nfft: Number of FFTs to use
+    :param stft_win: Length of the STFT window
+    :param stft_hop: Length of the STFT hop
+    :param stft_nmels: Number of mel bands to use
+    :param mel_f_min: Minimum frequency for the mel bands
+    :param model: Name of the predefined model to use. Any of keras.applications
+    :param audio_augmentations: List of audio augmentations to use
+    :param spectrogram_augmentations: List of spectrogram augmentations to use
+    :param batch_size: Batch size for the training
+    :param epochs: Number of epochs to train
     :return:
     """
-    fig, (ax, bx) = plt.subplots(2, 1)
-    ax.plot(history.history['binary_accuracy'] if 'binary_accuracy' in history.history else history.history['categorical_accuracy'])
-    ax.plot(history.history['val_binary_accuracy'] if 'val_binary_accuracy' in history.history else history.history['val_categorical_accuracy'])
-    ax.set_title('model accuracy')
-    ax.set_ylabel('accuracy')
-    ax.set_xlabel('epoch')
-    ax.legend(['train', 'val'], loc='upper left')
-    bx.plot(history.history['loss'])
-    bx.plot(history.history['val_loss'])
-    bx.set_title('model loss')
-    bx.set_ylabel('loss')
-    bx.set_xlabel('epoch')
-    bx.legend(['train', 'val'], loc='upper left')
-    plt.savefig(model_id + '.png')
-    plt.show()
-
-
-class Main:
-
-    def infer(
-            self,
-            filename,
-            model_path,
-            model_config_path=None,
-            task='segment'
-    ):
-        if __name__ == '__main__':
-            if task not in TASK2MODEL:
-                LOGGER.error(f"Task {task} is not supported. Supported tasks are {TASK2MODEL.keys()}")
-                exit()
-            if not model_config_path:
-                base_path, model_name = model_path.rsplit('.', 1)[0].rsplit('/', 1)
-                model_config_path = f"{base_path}/{MODEL_CONFIG_FOLDER}/{model_name}/model-config.json"
-            model = TASK2MODEL[task](model_path, model_config_path)
-            base_file_name = filename.split(".", 1)[0]
-            probabilities = model.predict_without_format(filename)
-            with open(f"{base_file_name}_probas.json", 'w') as f:
-                json.dump(probabilities.tolist(), f)
-            predictions = model.format_output(probabilities)
-            with open(f"{base_file_name}_{task}.json", 'w') as f:
-                json.dump(predictions, f, default=str)
-            print(predictions)
-
-    def train(
-            self,
-            folder,
-            sample_rate: int = DEFAULT_SAMPLE_RATE,
-            window: float = DEFAULT_WINDOW,
-            step: float = DEFAULT_STEP,
-            classes2avoid: List[str] = (),
-            checkpoints_folder: str = CHECKPOINTS_FOLDER,
-            optimizer: str = "Adam",
-            class_loader: str = "ClassLoaderFromFolderName",
-            learning_rate: float = 0.001,
-            model_id: str = None,
-            stft_nfft: int = DEFAULT_STFT_N_FFT,
-            stft_win: int = DEFAULT_STFT_WIN,
-            stft_hop: int = DEFAULT_STFT_HOP,
-            stft_nmels: int = DEFAULT_N_MELS,
-            mel_f_min: int = DEFAULT_MEL_F_MIN,
-            model: str = None,
-            audio_augmentations: List[str] = (),
-            spectrogram_augmentations: List[str] = (),
-            epochs=DEFAULT_EPOCHS,
-            batch_size=DEFAULT_BATCH_SIZE,
-    ):
-        """
-        Trains the model
-        :param folder: Path to the older containing the audio files
-        :param sample_rate: Sample rate the audios will be resampled to
-        :param window: Seconds of audio to use
-        :param step: Seconds to move the window
-        :param classes2avoid: Classes to avoid from training model
-        :param checkpoints_folder: Path to save the model checkpoints
-        :param optimizer: String with the optimizer to use
-        :param class_loader: String with the class loader to use
-        :param learning_rate: Learning rate for the optimizer
-        :param model_id: String with the model id
-        :param stft_nfft: Number of FFTs to use
-        :param stft_win: Length of the STFT window
-        :param stft_hop: Length of the STFT hop
-        :param stft_nmels: Number of mel bands to use
-        :param mel_f_min: Minimum frequency for the mel bands
-        :param model: Name of the predefined model to use. Any of keras.applications
-        :param audio_augmentations: List of audio augmentations to use
-        :param spectrogram_augmentations: List of spectrogram augmentations to use
-        :param batch_size: Batch size for the training
-        :param epochs: Number of epochs to train
-        :return:
-        """
-        trainer = Trainer(
-            stft_nfft=stft_nfft,
-            stft_win=stft_win,
-            stft_hop=stft_hop,
-            stft_nmels=stft_nmels,
-            mel_f_min=mel_f_min,
-            predefined_model=model,
-            audio_augmentations=audio_augmentations,
-            spectrogram_augmentations=spectrogram_augmentations
-        )
-        dataset = Dataset(
-            folder,
-            sample_rate=sample_rate,
-            window=window,
-            step=step,
-            classes2avoid=classes2avoid,
-            class_loader=class_loader
-        )
-        if not model_id:
-            folder_name = folder.rsplit("/")[-1] if folder[-1] != "/" else folder.rsplit("/")[-2]
-            model_id = f"{folder_name}_{str(datetime.datetime.now())}_{sample_rate}Hz_{window}w_{step}s"
-        checkpoint_filepath, model_config_path, history = trainer.train(
-            dataset,
-            val_size=0.2,
-            optimizer=optimizer,
-            learning_rate=learning_rate,
-            checkpoints_folder=checkpoints_folder,
-            model_id=model_id,
-            batch_size=batch_size,
-            epochs=epochs
-        )
-        os.makedirs('histories', exist_ok=True)
-        with open(f'histories/{model_id}.json', "w") as f:
-            json.dump(history.history, f, default=str)
-        plot_history(history, model_id)
+    if type(classes2avoid) is str:
+        classes2avoid = classes2avoid.split(",")
+    trainer = Trainer(
+        predefined_model=model,
+        audio_augmentations=audio_augmentations,
+        spectrogram_augmentations=spectrogram_augmentations
+    )
+    dataset = TYPE2DATASET[dataset_type](
+        folder=folder,
+        sample_rate=sample_rate,
+        window=window,
+        step=step,
+        stft_nfft=stft_nfft,
+        stft_win=stft_win,
+        stft_hop=stft_hop,
+        stft_nmels=stft_nmels,
+        mel_f_min=mel_f_min,
+        classes2avoid=classes2avoid,
+        class_loader=class_loader,
+        model=encodec_model,
+        decode=encodec_decode,
+        bandwidth=bandwidth
+    )
+    if not model_id or model_id == constants.DEFAULT_MODEL_ID:
+        folder_name = folder.rsplit("/")[-1] if folder[-1] != "/" else folder.rsplit("/")[-2]
+        model_id = f"{folder_name}_{str(datetime.datetime.now())}_{sample_rate}Hz_{window}w_{step}s"
+    checkpoint_filepath, model_config_path, history = trainer.train(
+        dataset,
+        val_size=0.2,
+        optimizer=optimizer,
+        learning_rate=learning_rate,
+        checkpoints_folder=checkpoints_folder,
+        batch_size=batch_size,
+        epochs=epochs,
+        model_id=model_id,
+        early_stopping_patience=early_stopping_patience,
+        reduce_lr_on_plateau_patience=reduce_lr_on_plateau_patience,
+        checkpoint_metric=checkpoint_metric,
+        early_stopping_metric=early_stopping_metric,
+    )
+    os.makedirs('histories', exist_ok=True)
+    with open(f'histories/{model_id}.json', "w") as f:
+        json.dump(history.history, f, default=str)
+    return checkpoint_filepath, model_config_path, history
 
 
 if __name__ == '__main__':
-    fire.Fire(Main)
+    fire.Fire()

@@ -1,1 +1,1 @@
-from .builder import AudioModelBuilder
+from .builder import AudioModelBuilder, EncodecModelBuilder

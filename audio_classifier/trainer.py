@@ -7,7 +7,6 @@ from sklearn.preprocessing import LabelBinarizer
 from audio_classifier import Dataset
 from audio_classifier import constants
 from audio_classifier.utils import LOGGER
-from audio_classifier.model import AudioModelBuilder
 
 
 def _generate(x: Collection, y: Collection, class_weight='balanced') -> callable:
@@ -30,22 +29,10 @@ def _dump_model_config(model_id: str, model_config: dict, checkpoints_folder: st
 class Trainer:
     def __init__(
             self,
-            stft_nfft: int = constants.DEFAULT_STFT_N_FFT,
-            stft_win: int = constants.DEFAULT_STFT_WIN,
-            stft_hop: int = constants.DEFAULT_STFT_HOP,
-            stft_nmels: int = constants.DEFAULT_N_MELS,
-            mel_f_min: int = constants.DEFAULT_MEL_F_MIN,
             predefined_model=None,
             audio_augmentations: List[str] = (),
             spectrogram_augmentations: List[str] = ()
     ):
-        self.model_config = {
-            "stft_nfft": stft_nfft,
-            "stft_window": stft_win,
-            "stft_hop": stft_hop,
-            "stft_nmels": stft_nmels,
-            "mel_f_min": mel_f_min
-        }
         self.predefined_model = None
         if predefined_model:
             self.predefined_model = constants.AVAILABLE_MODELS[predefined_model](
@@ -69,15 +56,6 @@ class Trainer:
             for spectrogram_augmentation in spectrogram_augmentations
         ]
 
-    def _get_model(self, model_config: dict):
-        num_classes = len(model_config.pop('classes'))
-        return AudioModelBuilder(**model_config).get_model(
-            num_classes,
-            audio_augmentations=self.audio_augmentations,
-            spectrum_augmentations=self.spectrogram_augmentations,
-            predefined_model=self.predefined_model,
-        )
-
     def train(
             self,
             dataset: Dataset,
@@ -100,15 +78,16 @@ class Trainer:
         encoder = LabelBinarizer()
         y = encoder.fit_transform(y)
         num_classes = len(encoder.classes_)
-        model_config = self.model_config.copy()
-        model_config.update({
-            "sample_rate": dataset.sample_rate,
-            "window": dataset.window,
-            "step": dataset.step,
-            "classes": encoder.classes_.tolist()
-        })
+        model_config = dataset.get_config()
+        model_config["classes"] = encoder.classes_.tolist()
         model_config_path = _dump_model_config(model_id, model_config)
-        model = self._get_model(model_config)
+        model_builder = dataset.get_model_builder(model_config)
+        model = model_builder.get_model(
+            num_classes,
+            audio_augmentations=self.audio_augmentations,
+            spectrum_augmentations=self.spectrogram_augmentations,
+            predefined_model=self.predefined_model,
+        )
 
         # Prepare model optimizer
         if optimizer:
@@ -127,7 +106,7 @@ class Trainer:
 
         # Prepare model output signature
         output_signature = (
-            tf.TensorSpec(shape=(int(dataset.sample_rate * dataset.window)), dtype=tf.int16),
+            model_builder.get_output_signature(),
             tf.TensorSpec(shape=(num_classes if num_classes > 2 else 1), dtype=tf.int64),
             tf.TensorSpec(shape=(), dtype=tf.float64)
         )
