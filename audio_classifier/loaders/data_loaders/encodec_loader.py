@@ -1,21 +1,21 @@
 import math
 import numpy as np
-import torch
 import typing as tp
 from encodec import binary
 from encodec.quantization.ac import ArithmeticDecoder, build_stable_quantized_cdf
 from encodec.model import EncodecModel
 from audio_classifier.loaders.data_loaders import DataLoader
 
+DEFAULT_DEVICE = "cpu"
 MODELS = {
-    'encodec_24khz': EncodecModel.encodec_model_24khz(),
-    'encodec_48khz': EncodecModel.encodec_model_48khz(),
+    'encodec_24khz': EncodecModel.encodec_model_24khz().to(DEFAULT_DEVICE),
+    'encodec_48khz': EncodecModel.encodec_model_48khz().to(DEFAULT_DEVICE),
 }
 
 
 class EncodecLoader(DataLoader):
 
-    def __init__(self, model: str=list(MODELS.keys())[0], decode=False, bandwidth=None, **kwargs):
+    def __init__(self, model: str=list(MODELS.keys())[0], decode=False, bandwidth=6., **kwargs):
         super().__init__(**kwargs)
         self.model_name = model
         self.bandwidth = bandwidth
@@ -35,14 +35,13 @@ class EncodecLoader(DataLoader):
     def frame_rate(self):
         return self.model.frame_rate
 
-    def decompress_from_file(self, fo: tp.IO[bytes], device='cpu') -> tp.Tuple[torch.Tensor, int, int]:
+    def decompress_from_file(self, fo: tp.IO[bytes]) -> tp.Tuple[np.ndarray, int]:
         """Decompress from a file-object.
         Returns a tuple `(wav, sample_rate)`.
 
         Args:
             fo (IO[bytes]): file-object from which to read. If you want to decompress
                 from `bytes` instead, see `decompress`.
-            device: device to use to perform the computations.
         """
         metadata = binary.read_ecdc_header(fo)
         model_name = metadata['m']
@@ -61,7 +60,7 @@ class EncodecLoader(DataLoader):
         if use_lm:
             lm = model.get_lm_model()
 
-        frames: tp.List[np.array] = []
+        frames = []
         segment_length = model.segment_length or audio_length
         segment_stride = model.segment_stride or audio_length
         for offset in range(0, audio_length, segment_stride):
@@ -76,10 +75,11 @@ class EncodecLoader(DataLoader):
                 unpacker = binary.BitUnpacker(model.bits_per_codebook, fo)
             frame = np.zeros((1, num_codebooks, frame_length), dtype=np.int64)
             for t in range(frame_length):
+                code_list: tp.List[int] = []
                 if use_lm:
+                    import torch
                     with torch.no_grad():
                         probas, states, offset = lm(torch.from_numpy(input_), states, offset)
-                code_list: tp.List[int] = []
                 for k in range(num_codebooks):
                     if use_lm:
                         q_cdf = build_stable_quantized_cdf(
@@ -101,35 +101,36 @@ class EncodecLoader(DataLoader):
             frames = np.array(frames[0])
         # Decode RVQ
         if self.decode:
-            frames = model.quantizer.decode(torch.from_numpy(frames.transpose(1, 0, 2)).to(device)).detach().cpu().numpy()
+            import torch
+            frames = model.quantizer.vq.decode(torch.from_numpy(frames.transpose(1, 0, 2))).detach().numpy()
         # Or normalize array data
         else:
             frames = frames / model.quantizer.bins
-        return frames[0].T, model.frame_rate, 128 if self.decode else num_codebooks
+        return frames[0].T, 128 if self.decode else num_codebooks
 
-    def _window(self, a, shape):
+    def _window(self, a, item_len):
+        shape = (self.window_frames, item_len)
         s = (a.shape[0] - shape[0] + 1,) + (a.shape[1] - shape[1] + 1,) + shape
         strides = a.strides + a.strides
-        return np.lib.stride_tricks.as_strided(a, shape=s, strides=strides)
+        return np.lib.stride_tricks.as_strided(a, shape=s, strides=strides)[::self.step_frames, 0]
 
-    def load(self, file):
-        with open(file, 'rb') as f:
-            x, sr, item_len = self.decompress_from_file(f)
-        return self._window(x, (self.window_frames, item_len))[::self.step_frames, 0]
+    def load(self, _file):
+        with open(_file, 'rb') as f:
+            x, item_len = self.decompress_from_file(f)
+        return self._window(x, item_len)
 
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
-    encl = EncodecLoader(window=2, step=1)
-    w = encl.load("/home/dejavu/repos/AudioClassifierRepo/out.ecdc")
-    encl = EncodecLoader(window=2, step=1, decode=True)
-    w = encl.load("/home/dejavu/repos/AudioClassifierRepo/out.ecdc")
-    encl = EncodecLoader(window=2, step=1, model='encodec_48khz')
-    w = encl.load("/home/dejavu/repos/AudioClassifierRepo/samples/concatenated.ecdc")
-    encl = EncodecLoader(window=2, step=1, model='encodec_48khz', decode=True)
-    w = encl.load("/home/dejavu/repos/AudioClassifierRepo/samples/concatenated.ecdc")
-
-    for i in range(3):
-        plt.imshow(w[i], aspect='auto')
-        plt.show()
+    all_results = []
+    for (model, file_path) in zip(MODELS.keys(),  [
+        "/home/dejavu/repos/AudioClassifierRepo/concatenated.ecdc",
+        "/home/dejavu/repos/AudioClassifierRepo/concatenated-hq.ecdc",
+    ]):
+        for decode in [False, True]:
+            encl = EncodecLoader(window=2, step=1, model=model, decode=decode)
+            w = encl.load(file_path)
+            for i in range(3):
+                plt.imshow(w[i], aspect='auto')
+                plt.show()
 
