@@ -1,1 +1,2 @@
 from audio_classifier.augmentations.audio.WhiteNoiseAugmentation import WhiteNoiseAugmentation
+from audio_classifier.augmentations.audio.PitchShiftAugmentation import PitchShiftAugmentation
