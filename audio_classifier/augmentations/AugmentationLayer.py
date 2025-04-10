@@ -5,7 +5,13 @@ class AugmentationLayer(keras.layers.Layer):
     """
     Base class for augmentation layers
     """
-    pass
+
+    def compute_output_shape(self, input_shape):
+        """
+        Compute the output shape of the layer
+        """
+        # Return the input shape as the output shape
+        return input_shape
 
 
 class AudioAugmentationLayer(AugmentationLayer):
