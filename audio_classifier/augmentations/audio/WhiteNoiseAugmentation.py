@@ -52,15 +52,15 @@ class WhiteNoiseAugmentation(AudioAugmentationLayer):
 if __name__ == '__main__':
     import librosa
     import soundfile as sf
-    from audio_classifier.loaders import FileLoader
+    from audio_classifier.loaders.data_loaders import AudioLoader
     from audio_classifier.model.builder import NormLayer
     SAMPLE_RATE = 16000
-    audio = FileLoader(SAMPLE_RATE, 2, 1).load(librosa.util.example('brahms'))
+    audio = AudioLoader(SAMPLE_RATE, window=2, step=1).load(librosa.util.example('brahms'))
     model = tf.keras.models.Sequential()
     model.add(NormLayer())
     model.add(WhiteNoiseAugmentation(max_snr=3, min_snr=6))
     a = model.predict(audio)
     print(a.shape)
     test_audio_index = 15
-    sf.write('noised_file.wav', a[test_audio_index], SAMPLE_RATE, subtype='PCM_24')
+    sf.write('pitched_file.wav', a[test_audio_index], SAMPLE_RATE, subtype='PCM_24')
     sf.write('original_file.wav', audio[test_audio_index], SAMPLE_RATE, subtype='PCM_24')
